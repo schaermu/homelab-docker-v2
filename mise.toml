@@ -1,0 +1,12 @@
+[tools]
+ansible = "latest"
+opentofu = "latest"
+pipx = "latest"
+python = "latest"
+
+[env]
+_.file = '.env.local'
+
+[tasks.tofu]
+dir = "tofu"
+run = "tofu"
