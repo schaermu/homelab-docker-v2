@@ -27,13 +27,13 @@ module "docker_swarm" {
 
     specs = {
       manager = {
-        count         = 1
+        count         = 3
         first_hostnum = 30
         cpu           = 2
         memory        = 4096
       }
       worker = {
-        count         = 1
+        count         = 4
         first_hostnum = 35
         cpu           = 4
         memory        = 16384

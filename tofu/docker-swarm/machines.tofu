@@ -45,6 +45,18 @@ resource "proxmox_virtual_environment_vm" "swarm_hosts" {
     type = "l26"
   }
 
+  dynamic "hostpci" {
+    for_each = each.value.has_igpu ? [1] : []
+    content {
+      # Passthrough iGPU
+      device  = "hostpci0"
+      mapping = "igpu"
+      pcie    = true
+      rombar  = true
+      xvga    = false
+    }
+  }
+
   initialization {
     datastore_id      = var.swarm.template_datastore_id
     user_data_file_id = proxmox_virtual_environment_file.user_data_cloud_config.id

@@ -1,0 +1,54 @@
+- name: Set hostname
+  hosts: [workers, managers]
+  become: true
+  tasks:
+    - name: Set hostname based on inventory_hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+- name: Install docker
+  hosts: [workers, managers]
+  vars:
+    pip_install_packages:
+      - name: docker
+  become: true
+  roles:
+    - role: geerlingguy.pip
+    - role: geerlingguy.docker
+
+- name: Initialize Docker Swarm
+  hosts: managers[0]
+  become: true
+  tasks:
+    - name: Initialize the Docker Swarm
+      community.docker.docker_swarm:
+        state: present
+    - name: Get swarm info
+      community.docker.docker_swarm_info:
+      register: swarm_info
+
+- name: Join remaining managers to Swarm
+  hosts: managers[1:]
+  become: true
+  tasks:
+    - name: Join as manager
+      community.docker.docker_swarm:
+        state: join
+        remote_addrs:
+          [
+            "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
+          ]
+        join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Manager }}"
+
+- name: Join workers to Swarm
+  hosts: workers
+  become: true
+  tasks:
+    - name: Join as worker
+      community.docker.docker_swarm:
+        state: join
+        remote_addrs:
+          [
+            "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
+          ]
+        join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Worker }}"

@@ -1,3 +1,7 @@
 .terraform
 .bitwarden
 .env.local
+.ansible
+
+ansible/galaxy_roles
+ansible/inventory

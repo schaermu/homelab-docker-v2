@@ -15,13 +15,14 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
     data      = <<-EOF
       #cloud-config
       timezone: Europe/Zurich
-      users:
+      users: 
       - default
-      - name: schaermu
+      - name: ansible
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups:
         - sudo
-        home: /home/schaermu
+        - docker
+        home: /home/ansible
         shell: /bin/bash
         sudo: ALL=(ALL) NOPASSWD:ALL
         ssh-authorized-keys:
