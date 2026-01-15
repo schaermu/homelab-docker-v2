@@ -1,9 +1,11 @@
 [tools]
+age = "latest"
 ansible = "latest"
 lefthook = "latest"
 opentofu = "latest"
 pipx = "latest"
 python = "latest"
+sops = "latest"
 
 [env]
 _.file = '.env.local'

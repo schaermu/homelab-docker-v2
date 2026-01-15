@@ -50,3 +50,33 @@
             "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
           ]
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Worker }}"
+
+- name: Deploy docker secrets
+  hosts: managers[0]
+  tasks:
+    - name: Create Docker secret for age private key
+      community.docker.docker_secret:
+        name: sops_age_private_key
+        data: "{{ lookup('file', '../secrets/sops_age_key.txt') | b64encode }}"
+        state: present
+    - name: Create Docker secret for SSH private key
+      community.docker.docker_secret:
+        name: github_ssh_private_key
+        data: "{{ lookup('file', '../secrets/id_ed25519') | b64encode }}"
+        state: present
+    - name: Verify secret creation
+      community.docker.docker_secret_info:
+      register: secret_info
+    - name: Dump secret info
+      debug:
+        var: secret_info
+
+- name: Deploy DocoCD stack
+  hosts: managers[0]
+  tasks:
+    - name: Deploy DocoCD stack
+      community.docker.docker_stack:
+        name: dococd
+        state: present
+        compose:
+          - ../docker-stacks/infra/dococd/docker-compose.yaml

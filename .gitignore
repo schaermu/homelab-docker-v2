@@ -5,3 +5,5 @@
 
 ansible/galaxy_roles
 ansible/inventory
+
+secrets/

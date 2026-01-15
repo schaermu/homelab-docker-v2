@@ -1,0 +1,44 @@
+x-poll-config: &poll-config
+ POLL_CONFIG: |
+   - url: https://github.com/schaermu/homelab-docker-v2.git
+     reference: main
+     interval: 180
+
+services:
+  app:
+    container_name: doco-cd
+    image: ghcr.io/kimdre/doco-cd:0.57.0
+    restart: unless-stopped
+    ports:
+      - "9120:9120"
+    environment:
+      TZ: Europe/Zurich
+      SSH_PRIVATE_KEY_FILE: /run/secrets/github_ssh_private_key
+      SOPS_AGE_KEY_FILE: /run/secrets/sops_age_private_key
+      DEPLOY_CONFIG_BASE_DIR: docker-stacks/
+      # WEBHOOK_SECRET: xxx
+      <<: *poll-config  # TODO: Replace with webhook as soon as ingress works
+    secrets:
+      - sops_age_private_key
+      - github_ssh_private_key
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - data:/data
+    healthcheck:
+      test: [ "CMD", "/doco-cd", "healthcheck" ]
+      start_period: 15s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes/doco-cd-data"
+secrets:
+  sops_age_private_key:
+    external: true
+  github_ssh_private_key:
+    external: true

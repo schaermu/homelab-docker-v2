@@ -1,0 +1,3 @@
+auto_discover: true
+auto_discover_opts:
+  depth: 2
