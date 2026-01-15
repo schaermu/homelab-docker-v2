@@ -1,0 +1,8 @@
+pre-commit:
+  commands:
+    validate:
+      run: mise tofu validate
+      glob: "*.tofu"
+    lint:
+      run: tofu fmt -check {staged_files}
+      glob: "*.tofu"

@@ -1,5 +1,6 @@
 [tools]
 ansible = "latest"
+lefthook = "latest"
 opentofu = "latest"
 pipx = "latest"
 python = "latest"
