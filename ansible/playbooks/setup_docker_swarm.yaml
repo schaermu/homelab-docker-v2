@@ -9,6 +9,7 @@
   vars:
     pip_install_packages:
       - name: docker
+      - name: jsondiff
   become: true
   roles:
     - role: geerlingguy.pip
@@ -57,26 +58,24 @@
     - name: Create Docker secret for age private key
       community.docker.docker_secret:
         name: sops_age_private_key
-        data: "{{ lookup('file', '../secrets/sops_age_key.txt') | b64encode }}"
+        data: "{{ lookup('file', '../../secrets/sops_age_key.txt') }}"
         state: present
     - name: Create Docker secret for SSH private key
       community.docker.docker_secret:
         name: github_ssh_private_key
-        data: "{{ lookup('file', '../secrets/id_ed25519') | b64encode }}"
+        data: "{{ lookup('file', '../../secrets/id_ed25519') }}"
         state: present
-    - name: Verify secret creation
-      community.docker.docker_secret_info:
-      register: secret_info
-    - name: Dump secret info
-      debug:
-        var: secret_info
 
 - name: Deploy DocoCD stack
   hosts: managers[0]
   tasks:
+    - name: Copy stack file
+      ansible.builtin.copy:
+        src: files/dococd-stack.yaml
+        dest: /tmp/dococd-docker-compose.yaml
     - name: Deploy DocoCD stack
       community.docker.docker_stack:
         name: dococd
         state: present
         compose:
-          - ../docker-stacks/infra/dococd/docker-compose.yaml
+          - /tmp/dococd-docker-compose.yaml
