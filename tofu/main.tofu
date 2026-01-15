@@ -15,14 +15,11 @@ module "docker_swarm" {
   }
 
   swarm = {
-    name       = "homelab-swarm"
-    base_vm_id = 100
-    image = {
-      checksum      = "f0442f3cd0087a609ecd5241109ddef0cbf4a1e05372e13d82c97fc77b35b2d8ecff85aea67709154d84220059672758508afbb0691c41ba8aa6d76818d89d65"
-      checksum_type = "sha512"
-      version       = "13"
-      url           = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2"
-    }
+    name                  = "homelab-swarm"
+    base_vm_id            = 100
+    datastore_id          = "local-vms"
+    template_datastore_id = "local-bootstrap"
+    image_name            = "debian-13-genericcloud-amd64-shrink.img"
 
     management = {
       ssh_public_keys = [data.bitwarden_item_ssh_key.donnerchuebu.public_key, data.bitwarden_item_ssh_key.klappchuebu.public_key]
@@ -30,14 +27,16 @@ module "docker_swarm" {
 
     specs = {
       manager = {
-        count  = 3
-        cpu    = 2
-        memory = 2048
+        count         = 1
+        first_hostnum = 30
+        cpu           = 2
+        memory        = 4096
       }
       worker = {
-        count  = 2
-        cpu    = 4
-        memory = 16384
+        count         = 1
+        first_hostnum = 35
+        cpu           = 4
+        memory        = 16384
       }
     }
 
