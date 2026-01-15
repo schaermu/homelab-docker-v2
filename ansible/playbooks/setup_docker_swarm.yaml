@@ -71,7 +71,7 @@
   tasks:
     - name: Copy stack file
       ansible.builtin.copy:
-        src: files/dococd-stack.yaml
+        src: ../../docker-stacks/infra/doco-cd/docker-compose.yaml
         dest: /tmp/dococd-docker-compose.yaml
     - name: Deploy DocoCD stack
       community.docker.docker_stack:

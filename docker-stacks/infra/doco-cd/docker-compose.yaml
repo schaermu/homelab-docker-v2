@@ -23,7 +23,9 @@ services:
       - github_ssh_private_key
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - data:/data
+      - type: volume
+        source: data
+        target: /data
     healthcheck:
       test: [ "CMD", "/doco-cd", "healthcheck" ]
       start_period: 15s
