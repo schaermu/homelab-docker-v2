@@ -11,3 +11,11 @@ _.file = '.env.local'
 [tasks.tofu]
 dir = "tofu"
 run = "tofu"
+
+[tasks.run-ansible]
+usage = '''
+arg "<playbook>" help="Name of the playbook to run (without .yaml extension)"
+'''
+run = '''
+ansible-playbook ansible/playbooks/${usage_playbook?}.yaml
+'''

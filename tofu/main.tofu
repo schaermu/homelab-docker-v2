@@ -33,18 +33,19 @@ module "docker_swarm" {
         memory        = 4096
       }
       worker = {
-        count         = 4
+        count         = 3
         first_hostnum = 35
-        cpu           = 4
+        cpu           = 2
         memory        = 16384
       }
     }
 
     network = {
-      bridge  = "vmbr0"
-      cidr    = "192.168.1.0/24"
-      gateway = "192.168.1.1"
-      dns     = ["192.168.1.11"]
+      bridge          = "vmbr0"
+      internal_bridge = "vnet1"
+      cidr            = "192.168.1.0/24"
+      gateway         = "192.168.1.1"
+      dns             = ["192.168.1.11"]
     }
   }
 }

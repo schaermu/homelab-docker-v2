@@ -36,10 +36,11 @@ variable "swarm" {
     })
 
     network = object({
-      bridge  = string,
-      cidr    = string
-      gateway = string,
-      dns     = optional(set(string))
+      bridge          = string,
+      internal_bridge = string,
+      cidr            = string
+      gateway         = string,
+      dns             = optional(set(string))
     })
   })
 }
