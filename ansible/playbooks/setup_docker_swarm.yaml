@@ -94,7 +94,18 @@
         dest: /tmp/dococd-docker-compose.yaml
     - name: Deploy DocoCD stack
       community.docker.docker_stack:
-        name: dococd
+        name: doco-cd
         state: present
         compose:
           - /tmp/dococd-docker-compose.yaml
+
+- name: Create Traefik overlay network
+  hosts: managers[0]
+  become: true
+  tasks:
+    - name: Create traefik proxy network
+      community.docker.docker_network:
+        name: traefik-public
+        driver: overlay
+        attachable: true
+        state: present
