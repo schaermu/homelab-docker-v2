@@ -1,2 +1,4 @@
 working_dir: docker-stacks/
 auto_discover: true
+auto_discover_opts:
+  depth: 2

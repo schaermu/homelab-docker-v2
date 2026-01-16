@@ -10,8 +10,7 @@ services:
   test:
     image: alpine
     depends_on:
-      init_volumes:
-        condition: service_completed_successfully
+      - init_volumes
     command: ls -lR /mnt
     volumes:
       - type: volume
