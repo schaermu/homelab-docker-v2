@@ -1,0 +1,28 @@
+services:
+  init_volumes:
+    image: alpine
+    restart: no
+    command: mkdir -p /mnt/test
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt
+  test:
+    image: alpine
+    depends_on:
+      init_volumes:
+        condition: service_completed_successfully
+    command: ls -lR /mnt
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/test
+        volume:
+          subpath: test
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
