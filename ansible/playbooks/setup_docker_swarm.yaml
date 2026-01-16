@@ -12,13 +12,13 @@
       ansible.builtin.group:
         name: "{{ lookup('env', 'DOCKER_USER') }}"
         state: present
-        gid: 3004
+        gid: "{{ lookup('env', 'DOCKER_GID') }}"
     - name: Ensure docker user exists
       ansible.builtin.user:
         name: "{{ lookup('env', 'DOCKER_USER') }}"
         state: present
         create_home: false
-        uid: 3004
+        uid: "{{ lookup('env', 'DOCKER_UID') }}"
         group: "{{ lookup('env', 'DOCKER_USER') }}"
 
 - name: Install docker
@@ -75,12 +75,14 @@
     - name: Create Docker secret for age private key
       community.docker.docker_secret:
         name: sops_age_private_key
-        data: "{{ lookup('file', '../../secrets/sops_age_key.txt') }}"
+        data: "{{ lookup('file', '../../secrets/sops_age_key.txt') | b64encode }}"
+        data_is_b64: true
         state: present
     - name: Create Docker secret for SSH private key
       community.docker.docker_secret:
         name: github_ssh_private_key
-        data: "{{ lookup('file', '../../secrets/id_ed25519') }}"
+        data: "{{ lookup('file', '../../secrets/id_ed25519') | b64encode }}"
+        data_is_b64: true
         state: present
 
 - name: Deploy DocoCD stack
@@ -88,7 +90,7 @@
   tasks:
     - name: Copy stack file
       ansible.builtin.copy:
-        src: ../../docker-stacks/infra/doco-cd/docker-compose.yaml
+        src: ./files/doco-cd-docker-compose.yaml
         dest: /tmp/dococd-docker-compose.yaml
     - name: Deploy DocoCD stack
       community.docker.docker_stack:

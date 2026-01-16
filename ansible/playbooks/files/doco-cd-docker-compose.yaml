@@ -5,8 +5,8 @@ x-poll-config: &poll-config
      interval: 180
 
 services:
-  user: "${DOCKER_USER}"
   init_volumes:
+    user: "${DOCKER_UID}:${DOCKER_GID}"
     image: alpine
     command: mkdir -p /mnt/docker-volumes/doco-cd-data
     deploy:
@@ -18,7 +18,7 @@ services:
         volume:
           nocopy: true
   app:
-    container_name: doco-cd
+    user: "${DOCKER_UID}:${DOCKER_GID}"
     image: ghcr.io/kimdre/doco-cd:0.57.0
     ports:
       - "9120:9120"
