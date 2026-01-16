@@ -4,6 +4,23 @@
   roles:
     - role: pve_server
 
+- name: Add docker user
+  hosts: [workers, managers]
+  become: true
+  tasks:
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        state: present
+        gid: 3004
+    - name: Ensure docker user exists
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        state: present
+        create_home: false
+        uid: 3004
+        group: "{{ lookup('env', 'DOCKER_USER') }}"
+
 - name: Install docker
   hosts: [workers, managers]
   vars:

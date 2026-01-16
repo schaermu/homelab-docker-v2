@@ -5,10 +5,21 @@ x-poll-config: &poll-config
      interval: 180
 
 services:
+  user: "${DOCKER_USER}"
+  init_volumes:
+    image: alpine
+    command: mkdir -p /mnt/docker-volumes/doco-cd-data
+    deploy:
+      mode: global-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
   app:
     container_name: doco-cd
     image: ghcr.io/kimdre/doco-cd:0.57.0
-    restart: unless-stopped
     ports:
       - "9120:9120"
     environment:
@@ -25,6 +36,9 @@ services:
       - type: volume
         source: data
         target: /data
+        volume:
+          subpath: doco-cd-data
+          nocopy: true
     healthcheck:
       test: [ "CMD", "/doco-cd", "healthcheck" ]
       start_period: 15s
@@ -37,7 +51,7 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=192.168.1.244,rw,vers=4.1
-      device: ":/mnt/MAIN_POOL/data/docker-volumes/doco-cd-data"
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
 secrets:
   sops_age_private_key:
     external: true
