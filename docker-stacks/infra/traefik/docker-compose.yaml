@@ -1,3 +1,21 @@
+configs:
+  traefik-config:
+    file: ./config/traefik.yaml
+  traefik-dynamic-config:
+    file: ./config/dynamic.conf.yaml
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
+networks:
+  traefik-public:
+    external: true
+
 services:
   init_volumes:
     user: "${DOCKER_UID}:${DOCKER_GID}"
@@ -24,10 +42,14 @@ services:
       - target: 443
         published: 443
         protocol: tcp
-        mode: host    
+        mode: host
+    configs:
+      - source: traefik-config
+        target: /etc/traefik/traefik.yaml
+      - source: traefik-dynamic-config
+        target: /etc/traefik/dynamic.conf.yml
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./config:/etc/traefik
       - type: volume
         source: data
         target: /letsencrypt
@@ -49,13 +71,3 @@ services:
       - no-new-privileges:true
     networks:
       - traefik-public
-volumes:
-  data:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=192.168.1.244,rw,vers=4.1
-      device: ":/mnt/MAIN_POOL/data/docker-volumes"
-networks:
-  traefik-public:
-    external: true
