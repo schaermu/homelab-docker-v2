@@ -13,8 +13,9 @@ volumes:
       device: ":/mnt/MAIN_POOL/data/docker-volumes"
 
 networks:
-  traefik-public:
+  default:
     external: true
+    name: traefik-public
 
 services:
   init_volumes:
@@ -69,5 +70,3 @@ services:
         traefik.http.services.traefik.loadbalancer.server.port: 8080
     security_opt:
       - no-new-privileges:true
-    networks:
-      - traefik-public
