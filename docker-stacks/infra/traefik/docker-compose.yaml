@@ -1,5 +1,17 @@
 services:
-  traefik:
+  init_volumes:
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    image: alpine
+    command: mkdir -p /mnt/docker-volumes/traefik-data
+    deploy:
+      mode: global-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  proxy:
     image: traefik:v3.6.4
     user: "${DOCKER_UID}:${DOCKER_GID}"
     env_file:
@@ -16,21 +28,34 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./config:/etc/traefik
+      - type: volume
+        source: data
+        target: /letsencrypt
+        volume:
+          subpath: traefik-data
+          nocopy: true
     deploy:
       mode: global
       placement:
-        constraints: [node.role == manager]
+        constraints: 
+          - node.role==manager
       labels:
         traefik.enable: "true"
         traefik.http.routers.dashboard.entryPoints: "websecure"
         traefik.http.routers.dashboard.middlewares: "default@file"
         traefik.http.routers.dashboard.service: "api@internal"
         traefik.http.services.traefik.loadbalancer.server.port: 8080
-    hostname: traefik
     security_opt:
       - no-new-privileges:true
     networks:
       - traefik-public
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
 networks:
   traefik-public:
     external: true

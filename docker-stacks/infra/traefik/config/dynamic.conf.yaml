@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
 tls:
   options:
     default:

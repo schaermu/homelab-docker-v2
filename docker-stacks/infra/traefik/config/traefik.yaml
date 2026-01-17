@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
 api:
   dashboard: true
 
@@ -5,8 +6,8 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: "schaermu+acme@pm.me"
-      storage: "/etc/traefik/acme_letsencrypt.json"
-      dnschallenge:
+      storage: "/certs/acme_letsencrypt.json"
+      dnsChallenge:
         provider: cloudflare
 
 entryPoints:
