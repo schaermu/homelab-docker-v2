@@ -40,7 +40,7 @@ services:
       SSH_PRIVATE_KEY_FILE: /run/secrets/github_ssh_private_key
       SOPS_AGE_KEY_FILE: /run/secrets/sops_age_private_key
       WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret
-      # <<: *poll-config  # TODO: Replace with webhook as soon as ingress works
+      DOCKER_QUIET_DEPLOY: "false"
     networks:
       cloudflare-tunnel:
         aliases:
