@@ -84,6 +84,41 @@
         data: "{{ lookup('file', '../../secrets/id_ed25519') | b64encode }}"
         data_is_b64: true
         state: present
+    - name: Create Docker secret for webhook secret
+      community.docker.docker_secret:
+        name: doco_cd_webhook_secret
+        data: "{{ lookup('file', '../../secrets/doco_cd_webhook_secret') | b64encode }}"
+        data_is_b64: true
+        state: present
+    - name: Create Docker secret for Cloudflared tunnel token
+      community.docker.docker_secret:
+        name: cloudflared_tunnel_token
+        data: "{{ lookup('file', '../../secrets/cloudflared_tunnel_token') | b64encode }}"
+        data_is_b64: true
+        state: present
+
+- name: Create default overlay networks
+  hosts: managers[0]
+  become: true
+  tasks:
+    - name: Create traefik proxy network
+      community.docker.docker_network:
+        name: traefik-public
+        driver: overlay
+        attachable: true
+        state: present
+        ipam_config:
+          - subnet: 10.0.2.0/24
+            gateway: 10.0.2.1
+    - name: Create cloudflared tunnel network
+      community.docker.docker_network:
+        name: cloudflare-tunnel
+        driver: overlay
+        attachable: true
+        state: present
+        ipam_config:
+          - subnet: 10.0.3.0/24
+            gateway: 10.0.3.1
 
 - name: Deploy DocoCD stack
   hosts: managers[0]
@@ -99,13 +134,16 @@
         compose:
           - /tmp/dococd-docker-compose.yaml
 
-- name: Create Traefik overlay network
+- name: Deploy Cloudflared Tunnel stack
   hosts: managers[0]
-  become: true
   tasks:
-    - name: Create traefik proxy network
-      community.docker.docker_network:
-        name: traefik-public
-        driver: overlay
-        attachable: true
+    - name: Copy stack file
+      ansible.builtin.copy:
+        src: ./files/cloudflared-docker-compose.yaml
+        dest: /tmp/cloudflared-docker-compose.yaml
+    - name: Deploy Cloudflared stack
+      community.docker.docker_stack:
+        name: cloudflared
         state: present
+        compose:
+          - /tmp/cloudflared-docker-compose.yaml

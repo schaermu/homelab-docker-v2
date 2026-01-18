@@ -46,7 +46,8 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     watch: true
     network: "traefik-public"
-    defaultRule: 'Host(`{{ index .Labels "com.docker.compose.service" }}.home.schaermu.ch`)'
+    exposedByDefault: false
+    defaultRule: 'Host(`{{ index .Labels "com.docker.compose.service" }}.lab.schaermu.ch`)'
   file:
     filename: "/etc/traefik/dynamic.conf.yml"
     watch: true

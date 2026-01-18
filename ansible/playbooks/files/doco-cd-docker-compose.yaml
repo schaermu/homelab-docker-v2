@@ -4,6 +4,26 @@ x-poll-config: &poll-config
      reference: main
      interval: 180
 
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
+secrets:
+  sops_age_private_key:
+    external: true
+  github_ssh_private_key:
+    external: true
+  doco_cd_webhook_secret:
+    external: true
+
+networks:
+  cloudflare-tunnel:
+    external: true
+
 services:
   init_volumes:
     user: "${DOCKER_UID}:${DOCKER_GID}"
@@ -17,20 +37,31 @@ services:
         target: /mnt/docker-volumes
         volume:
           nocopy: true
+  whoami:
+    image: traefik/whoami
+    deploy:
+      replicas: 2
+    networks:
+      cloudflare-tunnel:
+        aliases:
+          - whoami
   app:
     user: "${DOCKER_UID}:${DOCKER_GID}"
     image: ghcr.io/kimdre/doco-cd:0.57.0
-    ports:
-      - "9120:9120"
     environment:
       TZ: Europe/Zurich
       SSH_PRIVATE_KEY_FILE: /run/secrets/github_ssh_private_key
       SOPS_AGE_KEY_FILE: /run/secrets/sops_age_private_key
-      # WEBHOOK_SECRET: xxx
-      <<: *poll-config  # TODO: Replace with webhook as soon as ingress works
+      WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret
+      # <<: *poll-config  # TODO: Replace with webhook as soon as ingress works
+    networks:
+      cloudflare-tunnel:
+        aliases:
+          - doco-cd
     secrets:
       - sops_age_private_key
       - github_ssh_private_key
+      - doco_cd_webhook_secret
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - type: volume
@@ -45,15 +76,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-volumes:
-  data:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=192.168.1.244,rw,vers=4.1
-      device: ":/mnt/MAIN_POOL/data/docker-volumes"
-secrets:
-  sops_age_private_key:
-    external: true
-  github_ssh_private_key:
-    external: true

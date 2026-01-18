@@ -1,0 +1,26 @@
+networks:
+  default:
+    name: cloudflare-tunnel
+    external: true
+
+secrets:
+  cloudflared_tunnel_token:
+    external: true
+
+services:
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    secrets:
+      - cloudflared_tunnel_token
+    environment:
+      TUNNEL_TOKEN_FILE: /run/secrets/cloudflared_tunnel_token
+    command: tunnel --no-autoupdate --protocol http2 run
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role==manager
