@@ -24,21 +24,14 @@ services:
     image: alpine
     command: mkdir -p /mnt/docker-volumes/doco-cd-data
     deploy:
-      mode: global-job
+      replicas: 1
+      mode: replicated-job
     volumes:
       - type: volume
         source: data
         target: /mnt/docker-volumes
         volume:
           nocopy: true
-  whoami:
-    image: traefik/whoami
-    deploy:
-      replicas: 2
-    networks:
-      cloudflare-tunnel:
-        aliases:
-          - whoami
   app:
     user: "${DOCKER_UID}:${DOCKER_GID}"
     image: ghcr.io/kimdre/doco-cd:0.57.0
