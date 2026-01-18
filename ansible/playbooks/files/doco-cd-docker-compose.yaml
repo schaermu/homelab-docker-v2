@@ -1,9 +1,3 @@
-x-poll-config: &poll-config
- POLL_CONFIG: |
-   - url: https://github.com/schaermu/homelab-docker-v2.git
-     reference: main
-     interval: 180
-
 volumes:
   data:
     driver: local
