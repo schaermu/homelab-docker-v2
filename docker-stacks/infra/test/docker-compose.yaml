@@ -1,0 +1,37 @@
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
+services:
+  init_volumes:
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    image: busybox
+    command: mkdir -p /mnt/docker-volumes/whoami-data
+    deploy:
+      replicas: 1
+      mode: replicated-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  whoami:
+    image: traefik/whoami
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    depends_on:
+      - init_volumes
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - type: volume
+        source: data
+        target: /data
+        volume:
+          subpath: whoami-data
+          nocopy: true
+    deploy:
+      replicas: 2
