@@ -1,0 +1,80 @@
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
+networks:
+  cloudflare-tunnel:
+    external: true
+
+services:
+  init_volumes:
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    image: busybox
+    command: >
+      sh -c "mkdir -p /mnt/docker-volumes/pocketid-data &&
+             mkdir -p /mnt/docker-volumes/pocketid-db-data"
+    deploy:
+      replicas: 1
+      mode: replicated-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  app:
+    image: ghcr.io/pocket-id/pocket-id:v2
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    depends_on:
+      - db
+    networks:
+      cloudflare-tunnel:
+        aliases:
+          - pocket-id
+    env_file:
+      - secrets/.env.secrets.enc
+    environment:
+      TZ: Europe/Zurich
+      APP_URL: https://auth.schaermu.ch
+      PUID: "${DOCKER_UID}"
+      PGID: "${DOCKER_GID}"
+      TRUST_PROXY: "true"
+      DB_CONNECTION_STRING: postgres://pocketid:${POSTGRES_PASSWORD}@db:5432/pocketid
+    volumes:
+      - type: volume
+        source: data
+        target: /app/data
+        volume:
+          subpath: pocketid-data
+          nocopy: true
+    healthcheck:
+      test: [ "CMD", "/app/pocket-id", "healthcheck" ]
+      interval: 1m30s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+  db:
+    image: postgres:17-alpine
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    env_file:
+      - secrets/.env.secrets.enc
+    environment:
+      POSTGRES_USER: pocketid
+      POSTGRES_DB: pocketid
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - type: volume
+        source: data
+        target: /var/lib/postgresql/data
+        volume:
+          subpath: pocketid-db-data
+          nocopy: true
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U pocketid" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5

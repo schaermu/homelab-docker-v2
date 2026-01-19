@@ -31,3 +31,11 @@ run = '''
 mkdir -p docker-stacks/${usage_stack?}/secrets
 sops encrypt --age age1ckwz78jqmky5675utpwezq328ksurvk7wrgkvmwcwljg5pes9fpslfdz0q secrets/${usage_file?} > docker-stacks/${usage_stack?}/secrets/${usage_file?}.enc
 '''
+
+[tasks.dococd-restart]
+usage = '''
+arg "<stack>" help="Target stack"
+'''
+run = '''
+curl -H "x-api-key: ${DOCOCD_API_KEY}" https://doco-cd.lab.schaermu.ch/v1/api/stack/${usage_stack?}/restart -X POST
+'''

@@ -125,6 +125,12 @@
         data: "{{ lookup('file', '../../secrets/id_ed25519') | b64encode }}"
         data_is_b64: true
         state: present
+    - name: Create Docker secret for DocoCD API secret
+      community.docker.docker_secret:
+        name: doco_cd_api_secret
+        data: "{{ lookup('file', '../../secrets/doco_cd_api_secret') | b64encode }}"
+        data_is_b64: true
+        state: present
     - name: Create Docker secret for webhook secret
       community.docker.docker_secret:
         name: doco_cd_webhook_secret
