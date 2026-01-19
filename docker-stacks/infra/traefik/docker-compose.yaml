@@ -1,8 +1,8 @@
 configs:
-  traefik-config:
-    file: ./config/traefik.yaml
-  traefik-dynamic-config:
-    file: ./config/dynamic.conf.yaml
+  traefik.yaml:
+    external: true
+  dynamic.conf.yaml:
+    external: true
 
 volumes:
   data:
@@ -45,9 +45,9 @@ services:
         protocol: tcp
         mode: host
     configs:
-      - source: traefik-config
+      - source: traefik.yaml
         target: /etc/traefik/traefik.yaml
-      - source: traefik-dynamic-config
+      - source: dynamic.conf.yaml
         target: /etc/traefik/dynamic.conf.yml
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
