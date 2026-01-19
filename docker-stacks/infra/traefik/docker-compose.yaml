@@ -67,6 +67,5 @@ services:
         traefik.http.routers.dashboard.entryPoints: "websecure"
         traefik.http.routers.dashboard.middlewares: "default@file"
         traefik.http.routers.dashboard.service: "api@internal"
+        traefik.http.routers.dashboard.rule: "Host(`traefik.lab.schaermu.ch`)"
         traefik.http.services.traefik.loadbalancer.server.port: 8080
-    security_opt:
-      - no-new-privileges:true
