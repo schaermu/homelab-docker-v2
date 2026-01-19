@@ -1,3 +1,9 @@
+x-poll-config: &poll-config
+ POLL_CONFIG: |
+   - url: https://github.com/schaermu/homelab-docker-v2.git
+     reference: main
+     interval: 60
+
 volumes:
   data:
     driver: local
@@ -21,7 +27,7 @@ networks:
 services:
   init_volumes:
     user: "${DOCKER_UID}:${DOCKER_GID}"
-    image: alpine
+    image: busybox
     command: mkdir -p /mnt/docker-volumes/doco-cd-data
     deploy:
       replicas: 1
@@ -39,8 +45,12 @@ services:
       TZ: Europe/Zurich
       SSH_PRIVATE_KEY_FILE: /run/secrets/github_ssh_private_key
       SOPS_AGE_KEY_FILE: /run/secrets/sops_age_private_key
-      WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret
-      DOCKER_QUIET_DEPLOY: "false"
+      # WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret # activate webhook after https://github.com/kimdre/doco-cd/pull/927 is merged
+      <<: *poll-config 
+      DOCKER_QUIET_DEPLOY: "true"
+      LOG_LEVEL: info
+    depends_on:
+      - init_volumes
     networks:
       cloudflare-tunnel:
         aliases:

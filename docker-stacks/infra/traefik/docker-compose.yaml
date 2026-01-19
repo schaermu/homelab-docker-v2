@@ -45,15 +45,15 @@ services:
         published: 443
         protocol: tcp
         mode: host
-    # configs:
-    #   - source: traefik-config
-    #     target: /etc/traefik/traefik.yaml
-    #     uid: "${DOCKER_UID}"
-    #     gid: "${DOCKER_GID}"
-    #   - source: traefik-dynamic-config
-    #     target: /etc/traefik/dynamic.conf.yml
-    #     uid: "${DOCKER_UID}"
-    #     gid: "${DOCKER_GID}"
+    configs:
+      - source: traefik-config
+        target: /etc/traefik/traefik.yaml
+        uid: "${DOCKER_UID}"
+        gid: "${DOCKER_GID}"
+      - source: traefik-dynamic-config
+        target: /etc/traefik/dynamic.conf.yml
+        uid: "${DOCKER_UID}"
+        gid: "${DOCKER_GID}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - type: volume
