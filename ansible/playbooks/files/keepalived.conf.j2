@@ -1,0 +1,34 @@
+global_defs {
+    script_user nobody
+    enable_script_security
+}
+
+vrrp_script chk_avail {
+    script "/etc/keepalived/healthcheck.sh"
+    interval 1
+    weight 10
+    rise 6
+    fall 1
+}
+
+vrrp_instance {{ ansible_facts['hostname'] }} {
+    interface eth0
+
+    state BACKUP
+    virtual_router_id 50
+    priority 100
+    advert_int 1
+
+    unicast_src_ip {{ ansible_facts['default_ipv4']['address'] }}
+    unicast_peer {
+        {{ other_managers|map('extract', hostvars, ['ansible_facts', 'default_ipv4', 'address'])|join('\n        ') }}
+    }
+
+    virtual_ipaddress {
+         {{ vip_address }} dev eth0
+    }
+
+    track_script {
+        chk_avail
+    }
+}

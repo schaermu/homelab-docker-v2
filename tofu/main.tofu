@@ -28,13 +28,13 @@ module "docker_swarm" {
     specs = {
       manager = {
         count         = 3
-        first_hostnum = 30
+        first_hostnum = 31 # 30 is VIP for keepalived
         cpu           = 2
         memory        = 4096
       }
       worker = {
         count         = 3
-        first_hostnum = 35
+        first_hostnum = 40
         cpu           = 2
         memory        = 16384
       }
@@ -45,7 +45,7 @@ module "docker_swarm" {
       internal_bridge = "vnet1"
       cidr            = "192.168.1.0/24"
       gateway         = "192.168.1.1"
-      dns             = ["192.168.1.11"]
+      dns             = ["1.1.1.1", "1.0.0.1"]
     }
   }
 }
