@@ -47,8 +47,8 @@ services:
       SOPS_AGE_KEY_FILE: /run/secrets/sops_age_private_key
       # WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret # activate webhook after https://github.com/kimdre/doco-cd/pull/927 is merged
       <<: *poll-config 
-      DOCKER_QUIET_DEPLOY: "true"
-      LOG_LEVEL: info
+      DOCKER_QUIET_DEPLOY: "false"
+      LOG_LEVEL: debug
     depends_on:
       - init_volumes
     networks:

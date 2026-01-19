@@ -33,7 +33,6 @@ services:
           nocopy: true
   proxy:
     image: traefik:v3.6.4
-    user: "${DOCKER_UID}:${DOCKER_GID}"
     env_file:
       - secrets/.env.cloudflare.enc
     ports:
@@ -48,17 +47,13 @@ services:
     configs:
       - source: traefik-config
         target: /etc/traefik/traefik.yaml
-        uid: "${DOCKER_UID}"
-        gid: "${DOCKER_GID}"
       - source: traefik-dynamic-config
         target: /etc/traefik/dynamic.conf.yml
-        uid: "${DOCKER_UID}"
-        gid: "${DOCKER_GID}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - type: volume
         source: data
-        target: /letsencrypt
+        target: /certs
         volume:
           subpath: traefik-data
           nocopy: true
