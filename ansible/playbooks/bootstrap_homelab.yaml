@@ -1,0 +1,102 @@
+- name: Deploy secrets
+  hosts: managers[0]
+  tasks:
+    - name: Look for secret files
+      delegate_to: localhost
+      ansible.builtin.find:
+        paths:
+          - "../../secrets"
+        file_type: file
+        patterns:
+          - '*'
+        read_whole_file: false
+        recurse: true
+      register: secret_type_files
+    - name: Only keep files not starting with '.env' (those are deployed using SOPS)
+      ansible.builtin.set_fact:
+        secret_files: "{{ secret_type_files.files | rejectattr('path', 'search', '/\\.env/') | list }}"
+    - name: Create docker secrets
+      community.docker.docker_secret:
+        name: "{{ item.path | basename }}"
+        data: "{{ lookup('file', item.path) | b64encode }}"
+        data_is_b64: true
+        state: present
+      loop: "{{ secret_files }}"
+
+- name: Deploy configs
+  hosts: managers[0]
+  tasks:
+    - name: Look for config files
+      delegate_to: localhost
+      ansible.builtin.find:
+        paths:
+          - "../../docker-stacks"
+        file_type: file
+        patterns:
+          - '*.yaml'
+          - '*.ini'
+          - '*.conf'
+        read_whole_file: false
+        recurse: true
+      register: config_type_files
+    - name: Only keep files within config folders
+      ansible.builtin.set_fact:
+        config_files: "{{ config_type_files.files | selectattr('path', 'search', 'config') | list }}"
+    - name: Create docker configs
+      community.docker.docker_config:
+        name: "{{ item.path | basename }}"
+        data: "{{ lookup('file', item.path) | b64encode }}"
+        data_is_b64: true
+        state: present
+      loop: "{{ config_files }}"
+
+- name: Create default overlay networks
+  hosts: managers[0]
+  become: true
+  tasks:
+    - name: Create traefik proxy network
+      community.docker.docker_network:
+        name: traefik-public
+        driver: overlay
+        attachable: true
+        state: present
+        ipam_config:
+          - subnet: 10.0.2.0/24
+            gateway: 10.0.2.1
+    - name: Create cloudflared tunnel network
+      community.docker.docker_network:
+        name: cloudflare-tunnel
+        driver: overlay
+        attachable: true
+        state: present
+        ipam_config:
+          - subnet: 10.0.3.0/24
+            gateway: 10.0.3.1
+
+- name: Deploy DocoCD stack
+  hosts: managers[0]
+  tasks:
+    - name: Copy stack file
+      ansible.builtin.copy:
+        src: ./files/doco-cd-docker-compose.yaml
+        dest: /tmp/dococd-docker-compose.yaml
+    - name: Deploy DocoCD stack
+      community.docker.docker_stack:
+        name: doco-cd
+        state: present
+        compose:
+          - /tmp/dococd-docker-compose.yaml
+
+- name: Deploy Cloudflared Tunnel stack
+  hosts: managers[0]
+  tasks:
+    - name: Copy stack file
+      ansible.builtin.copy:
+        src: ./files/cloudflared-docker-compose.yaml
+        dest: /tmp/cloudflared-docker-compose.yaml
+    - name: Deploy Cloudflared stack
+      community.docker.docker_stack:
+        name: cloudflared
+        state: present
+        compose:
+          - /tmp/cloudflared-docker-compose.yaml
