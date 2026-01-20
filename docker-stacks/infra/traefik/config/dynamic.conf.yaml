@@ -36,3 +36,21 @@ http:
 
     gzip:
       compress: {}
+
+    oidc-auth:
+      plugin:
+        traefik-oidc-auth:
+          Secret: "${OIDC_SECRET}"
+          SessionCookie:
+            Domain: ".schaermu.ch"
+          Provider:
+              ClientId: "${OIDC_CLIENT_ID}"
+              ClientSecret: "${OIDC_CLIENT_SECRET}"
+              Url: https://auth.schaermu.ch
+              UsePkce: true
+          Scopes:
+              - openid
+              - profile
+              - email
+              - groups
+

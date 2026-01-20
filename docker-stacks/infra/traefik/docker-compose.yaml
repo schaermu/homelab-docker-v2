@@ -1,8 +1,8 @@
 configs:
   traefik.yaml:
-    external: true
+    file: ./config/traefik.yaml
   dynamic.conf.yaml:
-    external: true
+    file: ./config/dynamic.conf.yaml
 
 volumes:
   data:
@@ -36,6 +36,7 @@ services:
     image: traefik:v3.6.4
     env_file:
       - secrets/.env.cloudflare.enc
+      - secrets/.env.oidc-auth.enc
     ports:
       - target: 80
         published: 80
