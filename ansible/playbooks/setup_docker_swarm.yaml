@@ -111,22 +111,18 @@
     - swarm
 
 - name: Label worker nodes for local storage
-  hosts: workers
+  hosts: managers[0]
   become: true
   tasks:
     - name: Add db label to worker 2
-      when: inventory_hostname == groups['workers'][1]
       community.docker.docker_node:
-        name: "{{ ansible_facts.hostname }}"
+        hostname: "{{ groups['workers'][1] }}"
         labels:
           db: "true"
-        state: present
     - name: Add ssd_storage label to worker 3
-      when: inventory_hostname == groups['workers'][2]
       community.docker.docker_node:
-        name: "{{ ansible_facts.hostname }}"
+        hostname: "{{ groups['workers'][2] }}"
         labels:
           ssd_storage: "true"
-        state: present
   tags:
     - swarm
