@@ -42,7 +42,6 @@ services:
       PUID: "3004"
       PGID: "3004"
       TRUST_PROXY: "true"
-      DB_CONNECTION_STRING: "postgres://pocketid:${POSTGRES_PASSWORD}@db:5432/pocketid"
     volumes:
       - type: volume
         source: data
