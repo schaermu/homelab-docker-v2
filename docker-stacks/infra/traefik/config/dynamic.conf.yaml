@@ -22,6 +22,7 @@ http:
         middlewares:
           - default-security-headers
           - gzip
+          - oidc-auth
 
     default-security-headers:
       headers:
