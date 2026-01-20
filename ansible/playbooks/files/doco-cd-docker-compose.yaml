@@ -22,7 +22,7 @@ networks:
 
 services:
   init_volumes:
-    user: "${DOCKER_UID}:${DOCKER_GID}"
+    user: "3004:3004"
     image: busybox
     command: >
       sh -c "mkdir -p /mnt/docker-volumes/doco-cd-data"
@@ -36,7 +36,7 @@ services:
         volume:
           nocopy: true
   app:
-    user: "${DOCKER_UID}:${DOCKER_GID}"
+    user: "3004:3004"
     image: ghcr.io/kimdre/doco-cd:0.57.0
     environment:
       TZ: Europe/Zurich

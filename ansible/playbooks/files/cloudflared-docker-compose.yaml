@@ -10,7 +10,6 @@ secrets:
 services:
   tunnel:
     image: cloudflare/cloudflared:latest
-    user: "${DOCKER_UID}:${DOCKER_GID}"
     secrets:
       - cloudflared_tunnel_token
     environment:
