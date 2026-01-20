@@ -1,4 +1,5 @@
 working_dir: docker-stacks/
+force_recreate: true
 auto_discover: true
 auto_discover_opts:
   depth: 2

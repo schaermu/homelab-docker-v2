@@ -5,6 +5,7 @@ volumes:
       type: nfs
       o: addr=192.168.1.244,rw,vers=4.1
       device: ":/mnt/MAIN_POOL/data/docker-volumes"
+  db-data:
 
 networks:
   cloudflare-tunnel:
@@ -15,8 +16,7 @@ services:
     user: "${DOCKER_UID}:${DOCKER_GID}"
     image: busybox
     command: >
-      sh -c "mkdir -p /mnt/docker-volumes/pocketid-data &&
-             mkdir -p /mnt/docker-volumes/pocketid-db-data"
+      sh -c "mkdir -p /mnt/docker-volumes/pocketid-data"
     deploy:
       replicas: 1
       mode: replicated-job
@@ -29,8 +29,6 @@ services:
   app:
     image: ghcr.io/pocket-id/pocket-id:v2
     user: "${DOCKER_UID}:${DOCKER_GID}"
-    depends_on:
-      - db
     networks:
       cloudflare-tunnel:
         aliases:
@@ -68,11 +66,13 @@ services:
     volumes:
       - /etc/passwd:/etc/passwd:ro
       - type: volume
-        source: data
+        source: db-data
         target: /var/lib/postgresql/data
-        volume:
-          subpath: pocketid-db-data
-          nocopy: true
+    deploy:
+      placement:
+        constraints:
+          - node.label.db==true
+      replicas: 1
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U pocketid" ]
       interval: 30s

@@ -45,7 +45,7 @@ services:
       API_SECRET_FILE: /run/secrets/doco_cd_api_secret
       WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret
       DOCKER_QUIET_DEPLOY: "false"
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
     depends_on:
       - init_volumes
     networks:

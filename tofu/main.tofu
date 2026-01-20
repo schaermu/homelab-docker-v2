@@ -26,6 +26,8 @@ module "docker_swarm" {
     }
 
     specs = {
+      default_disk_size = 128
+      storage_disk_size = 512
       manager = {
         count         = 3
         first_hostnum = 31 # 30 is VIP for keepalived

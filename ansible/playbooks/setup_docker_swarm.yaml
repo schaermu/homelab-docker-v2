@@ -109,3 +109,24 @@
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Worker }}"
   tags:
     - swarm
+
+- name: Label worker nodes for local storage
+  hosts: workers
+  become: true
+  tasks:
+    - name: Add db label to worker 2
+      when: inventory_hostname == groups['workers'][1]
+      community.docker.docker_node:
+        name: "{{ ansible_facts.hostname }}"
+        labels:
+          db: "true"
+        state: present
+    - name: Add ssd_storage label to worker 3
+      when: inventory_hostname == groups['workers'][2]
+      community.docker.docker_node:
+        name: "{{ ansible_facts.hostname }}"
+        labels:
+          ssd_storage: "true"
+        state: present
+  tags:
+    - swarm

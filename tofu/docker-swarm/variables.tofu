@@ -21,6 +21,8 @@ variable "swarm" {
     })
 
     specs = object({
+      default_disk_size = number,
+      storage_disk_size = number,
       manager = object({
         count         = number,
         first_hostnum = number,
