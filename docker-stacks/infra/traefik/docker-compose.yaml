@@ -21,7 +21,8 @@ services:
   init_volumes:
     user: "${DOCKER_UID}:${DOCKER_GID}"
     image: busybox
-    command: mkdir -p /mnt/docker-volumes/traefik-data
+    command: >
+      sh -c "mkdir -p /mnt/docker-volumes/traefik-data"
     deploy:
       replicas: 1
       mode: replicated-job

@@ -36,7 +36,7 @@ services:
         aliases:
           - pocket-id
     env_file:
-      - secrets/.env.secrets.enc
+      - secrets/.env.pocketid.enc
     environment:
       TZ: Europe/Zurich
       APP_URL: https://auth.schaermu.ch
@@ -61,7 +61,7 @@ services:
     image: postgres:17-alpine
     user: "${DOCKER_UID}:${DOCKER_GID}"
     env_file:
-      - secrets/.env.secrets.enc
+      - secrets/.env.pocketid.enc
     environment:
       POSTGRES_USER: pocketid
       POSTGRES_DB: pocketid
