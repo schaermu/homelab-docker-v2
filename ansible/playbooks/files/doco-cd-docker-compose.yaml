@@ -36,7 +36,6 @@ services:
         volume:
           nocopy: true
   app:
-    user: "3004:3004"
     image: ghcr.io/kimdre/doco-cd:0.57.0
     environment:
       TZ: Europe/Zurich
@@ -64,7 +63,7 @@ services:
       - doco_cd_webhook_secret
       - doco_cd_api_secret
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - type: volume
         source: data
         target: /data

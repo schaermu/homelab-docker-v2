@@ -34,22 +34,27 @@
   tags:
     - keepalived
 
-- name: Add docker user
+- name: Add docker-apps user
   hosts: [workers, managers]
   become: true
   tasks:
-    - name: Ensure docker group exists
+    - name: Ensure docker-apps group exists
       ansible.builtin.group:
         name: "{{ lookup('env', 'DOCKER_USER') }}"
         state: present
         gid: "{{ lookup('env', 'DOCKER_GID') }}"
-    - name: Ensure docker user exists
+    - name: Ensure docker-apps user exists
       ansible.builtin.user:
         name: "{{ lookup('env', 'DOCKER_USER') }}"
         state: present
         create_home: false
         uid: "{{ lookup('env', 'DOCKER_UID') }}"
         group: "{{ lookup('env', 'DOCKER_USER') }}"
+    - name: Add docker-apps user to docker group
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        groups: docker
+        append: true
   tags:
     - swarm
 
