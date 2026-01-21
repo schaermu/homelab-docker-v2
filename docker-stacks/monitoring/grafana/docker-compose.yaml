@@ -1,0 +1,61 @@
+configs:
+  grafana.ini:
+    file: ./config/grafana.ini
+  datasources.yaml:
+    file: ./config/datasources.yaml
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
+networks:
+  default:
+    name: grafana-net
+  cloudflare-tunnel:
+    external: true
+  metrics-net:
+    external: true
+
+services:
+  init_volumes:
+    user: "3004:3004"
+    image: busybox
+    command: >
+      sh -c "mkdir -p /mnt/docker-volumes/grafana-data"
+    deploy:
+      replicas: 1
+      mode: replicated-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  grafana:
+    image: grafana/grafana:latest
+    configs:
+      - source: grafana.ini
+        target: /etc/grafana/grafana.ini
+      - source: datasources.yaml
+        target: /etc/grafana/provisioning/datasources/datasources.yaml
+    volumes:
+      - type: volume
+        source: data
+        target: /var/lib/grafana
+        volume:
+          subpath: grafana-data
+          nocopy: true
+    networks:
+      default:
+      metrics-net:
+      cloudflare-tunnel:
+        aliases:
+          - grafana
+    env_file:
+      - secrets/.env.grafana.enc
+    deploy:
+      replicas: 1

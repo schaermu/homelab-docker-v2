@@ -1,0 +1,43 @@
+configs:
+  vector.toml:
+    file: ./config/vector.toml
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/logs"
+
+networks:
+  default:
+    name: vlog-net
+  metrics-net:
+    external: true
+
+services:
+  victorialogs:
+    image: victoriametrics/victorialogs:v1.43.1
+    command:
+      - "-storageDataPath=/vlogs"
+      - "-httpListenAddr=:9428"
+    volumes:
+      - type: volume
+        source: data
+        target: /vlogs
+    deploy:
+      mode: replicated
+      replicas: 1
+  
+  vector:
+    image: docker.io/timberio/vector:0.46.X-distroless-libc
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    configs:
+      - source: vector.toml
+        target: /etc/vector/vector.toml
+    deploy:
+      mode: global
