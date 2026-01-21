@@ -1,6 +1,6 @@
 configs:
-  vector.toml:
-    file: ./config/vector.toml
+  vector.yaml:
+    file: ./config/vector.yaml
 
 volumes:
   data:
@@ -37,7 +37,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker:/var/lib/docker:ro
     configs:
-      - source: vector.toml
-        target: /etc/vector/vector.toml
+      - source: vector.yaml
+        target: /etc/vector/vector.yaml
     deploy:
       mode: global

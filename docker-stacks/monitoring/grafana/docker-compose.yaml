@@ -35,7 +35,7 @@ services:
         target: /mnt/docker-volumes
         volume:
           nocopy: true
-  grafana:
+  app:
     image: grafana/grafana:latest
     configs:
       - source: grafana.ini
