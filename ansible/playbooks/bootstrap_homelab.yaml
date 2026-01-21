@@ -23,33 +23,6 @@
         state: present
       loop: "{{ secret_files }}"
 
-# - name: Deploy configs
-#   hosts: managers[0]
-#   tasks:
-#     - name: Look for config files
-#       delegate_to: localhost
-#       ansible.builtin.find:
-#         paths:
-#           - "../../docker-stacks"
-#         file_type: file
-#         patterns:
-#           - '*.yaml'
-#           - '*.ini'
-#           - '*.conf'
-#         read_whole_file: false
-#         recurse: true
-#       register: config_type_files
-#     - name: Only keep files within config folders
-#       ansible.builtin.set_fact:
-#         config_files: "{{ config_type_files.files | selectattr('path', 'search', 'config') | list }}"
-#     - name: Create docker configs
-#       community.docker.docker_config:
-#         name: "{{ item.path | basename }}"
-#         data: "{{ lookup('file', item.path) | b64encode }}"
-#         data_is_b64: true
-#         state: present
-#       loop: "{{ config_files }}"
-
 - name: Create default overlay networks
   hosts: managers[0]
   become: true
@@ -72,6 +45,15 @@
         ipam_config:
           - subnet: 10.0.3.0/24
             gateway: 10.0.3.1
+    - name: Create metrics network
+      community.docker.docker_network:
+        name: metrics-net
+        driver: overlay
+        attachable: true
+        state: present
+        ipam_config:
+          - subnet: 10.0.5.0/24
+            gateway: 10.0.5.1
 
 - name: Deploy DocoCD stack
   hosts: managers[0]

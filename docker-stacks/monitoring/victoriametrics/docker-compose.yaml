@@ -1,6 +1,7 @@
 networks:
   default:
     name: metrics-net
+    external: true
 
 volumes:
   victoriametrics-data:
