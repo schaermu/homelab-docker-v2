@@ -19,6 +19,8 @@ networks:
     external: true
   metrics-net:
     external: true
+  vlog-net:
+    external: true
 
 services:
   init_volumes:
@@ -52,6 +54,7 @@ services:
     networks:
       default:
       metrics-net:
+      vlog-net:
       cloudflare-tunnel:
         aliases:
           - grafana

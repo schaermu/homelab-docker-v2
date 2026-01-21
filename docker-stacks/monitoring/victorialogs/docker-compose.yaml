@@ -17,11 +17,15 @@ networks:
     external: true
 
 services:
-  victorialogs:
+  vlogs:
     image: victoriametrics/victoria-logs:v1.43.1
     command:
       - "-storageDataPath=/vlogs"
       - "-httpListenAddr=:9428"
+    networks:
+      default:
+        aliases:
+          - victorialogs
     volumes:
       - type: volume
         source: data
@@ -29,6 +33,9 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+      update_config:
+        delay: 10s
+        order: stop-first
   
   vector:
     image: docker.io/timberio/vector:0.46.X-distroless-libc
