@@ -1,22 +1,43 @@
 api:
   enabled: true
   address: 0.0.0.0:8686
+log_schema:
+  host_key: host.hostname
 sources:
   docker:
     type: docker_logs
   vector_metrics:
     type: internal_metrics
 transforms:
-  msg_parser:
+  label_cleaner:
     type: remap
     inputs: [docker]
+    source: |
+      remove!(value: .labels, path: [
+        "cd.doco.deployment.auto_discover",
+        "cd.doco.deployment.auto_discover.delete",
+        "cd.doco.deployment.external_secrets_hash",
+        "cd.doco.deployment.target.ref",
+        "cd.doco.deployment.target.sha",
+        "cd.doco.deployment.trigger",
+        "cd.doco.deployment.working_dir",
+        "cd.doco.deployment.name",
+        "cd.doco.metadata.manager",
+        "cd.doco.metadata.version",
+        "cd.doco.repository.name",
+        "cd.doco.repository.url"
+      ])
+
+  log_parser:
+    type: remap
+    inputs: [label_cleaner]
     source: |
       .message = parse_json(.message) ?? .message
 sinks:
   vlogs:
     type: elasticsearch
     inputs:
-      - msg_parser
+      - log_parser
     endpoints:
       - http://victorialogs:9428/insert/elasticsearch/
     mode: bulk

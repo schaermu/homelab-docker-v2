@@ -38,7 +38,7 @@ services:
         order: stop-first
   
   vector:
-    image: docker.io/timberio/vector:0.46.X-distroless-libc
+    image: docker.io/timberio/vector:0.52.X-distroless-libc
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
