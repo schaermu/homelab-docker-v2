@@ -14,7 +14,8 @@ variable "swarm" {
     base_vm_id            = optional(number, 100),
     datastore_id          = string,
     template_datastore_id = string,
-    image_name            = string
+    disk_image_id         = string
+    user_data_file_id     = optional(string, "") # TODO: replacing cloud-init with base cloud config forces re-creation of all VMs!
 
     management = object({
       ssh_public_keys = list(string)
@@ -38,11 +39,10 @@ variable "swarm" {
     })
 
     network = object({
-      bridge          = string,
-      internal_bridge = string,
-      cidr            = string
-      gateway         = string,
-      dns             = optional(set(string))
+      bridge  = string,
+      cidr    = string
+      gateway = string,
+      dns     = optional(set(string))
     })
   })
 }

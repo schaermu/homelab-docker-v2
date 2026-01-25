@@ -1,9 +1,49 @@
+variable "template_datastore_id" {
+  default = "local-bootstrap"
+}
+
+variable "datastore_id" {
+  default = "local-vms"
+}
+
 data "bitwarden_item_ssh_key" "donnerchuebu" {
   search = "schaermu@donnerchuebu"
 }
 
 data "bitwarden_item_ssh_key" "klappchuebu" {
   search = "schaermu@klappchuebu"
+}
+
+module "bastion" {
+  source = "./bastion"
+  proxmox = {
+    cluster = var.proxmox_cluster
+    node    = var.proxmox_node
+    api_url = var.proxmox_url
+  }
+
+  bastion = {
+    name                  = "bastion"
+    vm_id                 = 120
+    datastore_id          = var.datastore_id
+    template_datastore_id = var.template_datastore_id
+    disk_image_id         = data.proxmox_virtual_environment_file.debian_iso.id
+    user_data_file_id     = proxmox_virtual_environment_file.user_data_base_cloud_config.id
+    tags                  = ["bastion", "ssh-access"]
+
+    specs = {
+      cpu       = 1
+      memory    = 1024
+      disk_size = 32
+    }
+
+    network = {
+      bridge  = "vmbr0"
+      ip      = "192.168.1.50"
+      gateway = "192.168.1.1"
+      dns     = ["1.1.1.1", "1.0.0.1"]
+    }
+  }
 }
 
 module "docker_swarm" {
@@ -17,12 +57,15 @@ module "docker_swarm" {
   swarm = {
     name                  = "homelab-swarm"
     base_vm_id            = 100
-    datastore_id          = "local-vms"
-    template_datastore_id = "local-bootstrap"
-    image_name            = "debian-13-genericcloud-amd64-shrink.img"
+    datastore_id          = var.datastore_id
+    template_datastore_id = var.template_datastore_id
+    disk_image_id         = data.proxmox_virtual_environment_file.debian_iso.id
 
     management = {
-      ssh_public_keys = [data.bitwarden_item_ssh_key.donnerchuebu.public_key, data.bitwarden_item_ssh_key.klappchuebu.public_key]
+      ssh_public_keys = [
+        data.bitwarden_item_ssh_key.donnerchuebu.public_key,
+        data.bitwarden_item_ssh_key.klappchuebu.public_key
+      ]
     }
 
     specs = {
@@ -43,11 +86,10 @@ module "docker_swarm" {
     }
 
     network = {
-      bridge          = "vmbr0"
-      internal_bridge = "vnet1"
-      cidr            = "192.168.1.0/24"
-      gateway         = "192.168.1.1"
-      dns             = ["1.1.1.1", "1.0.0.1"]
+      bridge  = "vmbr0"
+      cidr    = "192.168.1.0/24"
+      gateway = "192.168.1.1"
+      dns     = ["1.1.1.1", "1.0.0.1"]
     }
   }
 }

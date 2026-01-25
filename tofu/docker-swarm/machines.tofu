@@ -32,7 +32,7 @@ resource "proxmox_virtual_environment_vm" "swarm_hosts" {
     interface    = "scsi0"
     size         = each.value.has_storage ? var.swarm.specs.storage_disk_size : var.swarm.specs.default_disk_size
     file_format  = "raw"
-    file_id      = data.proxmox_virtual_environment_file.debian_iso.id
+    file_id      = var.swarm.disk_image_id
     cache        = "writeback"
     iothread     = false
     ssd          = true

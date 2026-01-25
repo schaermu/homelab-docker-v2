@@ -1,10 +1,10 @@
-resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
-  node_name    = var.proxmox.node
-  datastore_id = var.swarm.template_datastore_id
+resource "proxmox_virtual_environment_file" "user_data_base_cloud_config" {
+  node_name    = var.proxmox_node
+  datastore_id = var.template_datastore_id
   content_type = "snippets"
 
   source_raw {
-    file_name = "user-data-cloud-config.yaml"
+    file_name = "user-data-base-cloud-config.yaml"
     data      = <<-EOF
       #cloud-config
       timezone: Europe/Zurich
@@ -14,12 +14,11 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups:
         - sudo
-        - docker
         home: /home/ansible
         shell: /bin/bash
         sudo: ALL=(ALL) NOPASSWD:ALL
         ssh-authorized-keys:
-        %{for key in var.swarm.management.ssh_public_keys}
+        %{for key in [data.bitwarden_item_ssh_key.donnerchuebu.public_key, data.bitwarden_item_ssh_key.klappchuebu.public_key]}
         - ${key}
         %{endfor}
       ssh_pwauth: false
