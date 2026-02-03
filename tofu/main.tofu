@@ -14,15 +14,15 @@ data "bitwarden_item_ssh_key" "klappchuebu" {
   search = "schaermu@klappchuebu"
 }
 
-module "bastion" {
-  source = "./bastion"
+module "bastion_host" {
+  source = "./single-vm"
   proxmox = {
     cluster = var.proxmox_cluster
     node    = var.proxmox_node
     api_url = var.proxmox_url
   }
 
-  bastion = {
+  host = {
     name                  = "bastion"
     vm_id                 = 120
     datastore_id          = var.datastore_id
@@ -46,6 +46,38 @@ module "bastion" {
   }
 }
 
+module "technitium_dns" {
+  source = "./single-vm"
+  proxmox = {
+    cluster = var.proxmox_cluster
+    node    = var.proxmox_node
+    api_url = var.proxmox_url
+  }
+
+  host = {
+    name                  = "technitium-primary"
+    vm_id                 = 130
+    datastore_id          = var.datastore_id
+    template_datastore_id = var.template_datastore_id
+    disk_image_id         = data.proxmox_virtual_environment_file.debian_iso.id
+    user_data_file_id     = proxmox_virtual_environment_file.user_data_base_cloud_config.id
+    tags                  = ["technitium", "dns", "dns-server"]
+
+    specs = {
+      cpu       = 1
+      memory    = 1024
+      disk_size = 32
+    }
+
+    network = {
+      bridge  = "vmbr0"
+      ip      = "192.168.1.60"
+      gateway = "192.168.1.1"
+      dns     = ["1.1.1.1", "1.0.0.1"]
+    }
+  }
+}
+
 module "docker_swarm" {
   source = "./docker-swarm"
   proxmox = {
@@ -60,13 +92,7 @@ module "docker_swarm" {
     datastore_id          = var.datastore_id
     template_datastore_id = var.template_datastore_id
     disk_image_id         = data.proxmox_virtual_environment_file.debian_iso.id
-
-    management = {
-      ssh_public_keys = [
-        data.bitwarden_item_ssh_key.donnerchuebu.public_key,
-        data.bitwarden_item_ssh_key.klappchuebu.public_key
-      ]
-    }
+    user_data_file_id     = proxmox_virtual_environment_file.user_data_base_cloud_config.id
 
     specs = {
       default_disk_size = 128

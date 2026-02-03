@@ -15,11 +15,7 @@ variable "swarm" {
     datastore_id          = string,
     template_datastore_id = string,
     disk_image_id         = string
-    user_data_file_id     = optional(string, "") # TODO: replacing cloud-init with base cloud config forces re-creation of all VMs!
-
-    management = object({
-      ssh_public_keys = list(string)
-    })
+    user_data_file_id     = string
 
     specs = object({
       default_disk_size = number,

@@ -59,7 +59,7 @@ resource "proxmox_virtual_environment_vm" "swarm_hosts" {
 
   initialization {
     datastore_id      = var.swarm.template_datastore_id
-    user_data_file_id = proxmox_virtual_environment_file.user_data_cloud_config.id
+    user_data_file_id = var.swarm.user_data_file_id
 
     ip_config {
       ipv4 {

@@ -7,11 +7,11 @@ variable "proxmox" {
   })
 }
 
-variable "bastion" {
-  description = "Bastion host configuration"
+variable "host" {
+  description = "Single VM host configuration"
   type = object({
     name                  = string,
-    vm_id                 = optional(number, 100),
+    vm_id                 = number,
     datastore_id          = string,
     template_datastore_id = string,
     disk_image_id         = string
