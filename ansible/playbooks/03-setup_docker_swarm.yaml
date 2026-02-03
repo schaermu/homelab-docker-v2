@@ -20,7 +20,7 @@
       src: ./files/keepalived.conf.j2
       dest: /etc/keepalived/keepalived.conf
     vars:
-      vip_address: "192.168.1.30"
+      vip_address: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"
   - name: Copy traefik healthcheck script
     ansible.builtin.copy:
       src: ./files/traefik-healthcheck.sh

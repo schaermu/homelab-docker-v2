@@ -1,0 +1,199 @@
+- name: Bootstrap PVE server
+  hosts: dns
+  become: true
+  roles:
+    - role: pve_server
+
+- name: Setup technitium user and install location
+  hosts: dns
+  become: true
+  tasks:
+    - name: Ensure technitium group exists
+      ansible.builtin.group:
+        name: technitium-dns-server
+        state: present
+
+    - name: Ensure technitium user exists
+      ansible.builtin.user:
+        name: technitium-dns-server
+        state: present
+        create_home: false
+        shell: /usr/sbin/nologin
+        system: true
+        group: technitium-dns-server
+
+    - name: Create installation directory
+      ansible.builtin.file:
+        path: /opt/technitium/dns
+        state: directory
+        owner: technitium-dns-server
+        group: technitium-dns-server
+        mode: '0755'
+
+    - name: Set ownership of /etc/dns folder
+      ansible.builtin.file:
+        path: /etc/dns
+        state: directory
+        owner: technitium-dns-server
+        group: technitium-dns-server
+        mode: '0755'
+
+- name: Install dotnet runtime
+  hosts: dns
+  become: true
+  tasks:
+    - name: Setup Microsoft repository
+      ansible.builtin.shell: |
+        wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+        dpkg -i packages-microsoft-prod.deb
+        rm packages-microsoft-prod.deb
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install dotnet runtime
+      ansible.builtin.apt:
+        name: aspnetcore-runtime-9.0
+        state: present
+
+- name: Setup and configure Technitium DNS Server
+  hosts: dns
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Ensure systemd-resolved is stopped and disabled
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: stopped
+        enabled: false
+
+    - name: Download and unarchive Technitium DNS Server (if not already installed)
+      ansible.builtin.unarchive:
+        src: https://download.technitium.com/dns/DnsServerPortable.tar.gz
+        dest: /opt/technitium/dns
+        owner: technitium-dns-server
+        group: technitium-dns-server
+        mode: '0755'
+        remote_src: yes
+        creates: /opt/technitium/dns/DnsServerApp.dll
+      register: technitium_unarchive
+    
+    - name: Copy systemd service file for Technitium DNS Server
+      ansible.builtin.copy:
+        src: ./files/technitium_dns.service
+        dest: /etc/systemd/system/dns.service
+      when: technitium_unarchive.changed
+    
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+      when: technitium_unarchive.changed
+
+    - name: Ensure DNS service is started and enabled
+      ansible.builtin.service:
+        name: dns
+        state: started
+        enabled: true
+    
+    - name: Populate service facts
+      service_facts:
+
+- name: Setup Technitium DNS via API
+  hosts: dns
+  become: false
+  gather_facts: true
+  tasks:
+    - name: Set api_url fact
+      ansible.builtin.set_fact:
+        api_url: "http://{{ ansible_facts.default_ipv4.address }}"
+    
+    - name: Login and get session token
+      effectivelywild.technitium_dns.technitium_dns_login:
+        api_url: "{{ api_url }}"
+        username: "admin"
+        password: "admin"
+        validate_certs: false
+      register: login_result
+      ignore_errors: True
+    
+    - name: Create new user for management
+      effectivelywild.technitium_dns.technitium_dns_create_user:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        username: "schaermu"
+        password: "{{ lookup('env', 'TECHNITIUM_DNS_PASSWORD') }}"
+        displayName: "Schaermu"
+        validate_certs: false
+      when: login_result is succeeded
+    
+    - name: Give new user admin privileges
+      effectivelywild.technitium_dns.technitium_dns_set_user_details:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        username: "schaermu"
+        memberOfGroups:
+          - "Administrators"
+        validate_certs: false
+      when: login_result is succeeded
+
+- name: Setup DNS zones and records
+  hosts: dns
+  become: false
+  gather_facts: true
+  tasks:
+    - name: Set api_url fact
+      ansible.builtin.set_fact:
+        api_url: "http://{{ ansible_facts.default_ipv4.address }}"
+
+    - name: Login and get session token
+      effectivelywild.technitium_dns.technitium_dns_login:
+        api_url: "{{ api_url }}"
+        username: "schaermu"
+        password: "{{ lookup('env', 'TECHNITIUM_DNS_PASSWORD') }}"
+        validate_certs: false
+      register: login_result
+      
+    - name: Disable default admin user
+      effectivelywild.technitium_dns.technitium_dns_set_user_details:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        username: "admin"
+        disabled: true
+        validate_certs: false
+    
+    - name: Configure blocklists
+      effectivelywild.technitium_dns.technitium_dns_set_server_settings:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        blockListUrls:
+          - https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling/hosts
+          - https://big.oisd.nl/domainswild2
+          - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/multi-onlydomains.txt
+        
+    - name: Create forward lookup DNS zone for schaermu.ch
+      effectivelywild.technitium_dns.technitium_dns_zone:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        zone: "schaermu.ch"
+        type: "Forwarder"
+        forwarder: "1.1.1.1"
+        initializeForwarder: true
+        protocol: "Udp"
+        state: "present"
+        validate_certs: false
+    
+    - name: Create records for lab.schaermu.ch
+      effectivelywild.technitium_dns.technitium_dns_record:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        zone: "schaermu.ch"
+        type: "A"
+        name: "{{ item }}.schaermu.ch"
+        ttl: 3600
+        ipAddress: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"
+        state: "present"
+        validate_certs: false
+      loop:
+        - "lab"
+        - "*.lab"
