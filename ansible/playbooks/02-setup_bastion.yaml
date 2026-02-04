@@ -8,11 +8,25 @@
   hosts: bastion
   become: true
   tasks:
+    - name: Generate password password hash using shell command
+      ansible.builtin.shell: "echo '{{ lookup('env', 'BASTION_USER_PASSWORD') }}' | openssl passwd -6 -stdin"
+      register: bastion_user_password_hash
+      no_log: true
+    
     - name: Ensure bastion group exists
       ansible.builtin.group:
         name: bastion
         state: present
         gid: 4004
+  
+    - name: Allow bastion group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%bastion'
+        line: '%bastion ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
     - name: Ensure bastion user exists
       ansible.builtin.user:
         name: schaermu
@@ -20,6 +34,9 @@
         create_home: true
         uid: 4004
         group: bastion
+        shell: /bin/bash
+        password:  "{{ bastion_user_password_hash.stdout }}"
+  
     - name: Set up authorized keys for bastion user
       ansible.posix.authorized_key:
         user: schaermu
@@ -52,6 +69,6 @@
 - name: Setup Tailscale on bastion host
   hosts: bastion
   roles:
-    - role: artis3n.tailscale
+    - role: artis3n.tailscale.machine
       vars:
         tailscale_authkey: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"

@@ -166,6 +166,9 @@
       effectivelywild.technitium_dns.technitium_dns_set_server_settings:
         api_url: "{{ api_url }}"
         api_token: "{{ login_result.token }}"
+        dnsServerDomain: "dns1.lab.schaermu.ch"
+        dnsServerLocalEndPoints: 
+          - "{{ ansible_facts.default_ipv4.address }}:53"
         blockListUrls:
           - https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling/hosts
           - https://big.oisd.nl/domainswild2
@@ -183,17 +186,31 @@
         state: "present"
         validate_certs: false
     
-    - name: Create records for lab.schaermu.ch
+    - name: Create internal records for schaermu.ch
       effectivelywild.technitium_dns.technitium_dns_record:
         api_url: "{{ api_url }}"
         api_token: "{{ login_result.token }}"
         zone: "schaermu.ch"
         type: "A"
-        name: "{{ item }}.schaermu.ch"
+        name: "{{ item.name }}.schaermu.ch"
         ttl: 3600
-        ipAddress: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"
+        ipAddress: "{{ item.address }}"
         state: "present"
         validate_certs: false
       loop:
-        - "lab"
-        - "*.lab"
+        - {name: "nas.lab", address: "192.168.1.244"}
+        - {name: "dns1.lab", address: "{{ ansible_facts.default_ipv4.address }}"}
+        - {name: "arthur.lab", address: "192.168.1.20"}
+        - {name: "proxy.lab", address: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"}
+    
+    - name: Create CNAME records for wildcard subdomains
+      effectivelywild.technitium_dns.technitium_dns_record:
+        api_url: "{{ api_url }}"
+        api_token: "{{ login_result.token }}"
+        zone: "schaermu.ch"
+        type: "CNAME"
+        name: "*.lab.schaermu.ch"
+        ttl: 3600
+        cname: "proxy.lab.schaermu.ch."
+        state: "present"
+        validate_certs: false
