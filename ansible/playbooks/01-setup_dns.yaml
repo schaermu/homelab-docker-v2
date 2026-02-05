@@ -214,3 +214,12 @@
         cname: "proxy.lab.schaermu.ch."
         state: "present"
         validate_certs: false
+
+- name: Setup DNS resolver on all hosts
+  hosts: [bastion, managers, workers]
+  become: true
+  tasks:
+    - name: Configure resolver using resolvectl
+      ansible.builtin.shell: |
+        resolvectl dns {{ ansible_facts.default_ipv4.interface }} {{ hostvars[groups['dns'][0]].ansible_facts.default_ipv4.address }}
+        resolvectl domain {{ ansible_facts.default_ipv4.interface }} lab.schaermu.ch
