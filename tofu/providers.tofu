@@ -29,6 +29,55 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = ">=4,<5"
     }
+    infisical = {
+      version = ">=0.16.0,<1.0.0"
+      source  = "infisical/infisical"
+    }
+  }
+}
+
+ephemeral "infisical_secret" "bw_email" {
+  name         = "BW_EMAIL"
+  env_slug     = "prod"
+  workspace_id = var.infisical_workspace_id
+  folder_path  = "/opentofu"
+}
+
+ephemeral "infisical_secret" "bw_master_password" {
+  name         = "BW_MASTER_PASSWORD"
+  env_slug     = "prod"
+  workspace_id = var.infisical_workspace_id
+  folder_path  = "/opentofu"
+}
+
+ephemeral "infisical_secret" "bw_client_id" {
+  name         = "BW_CLIENT_ID"
+  env_slug     = "prod"
+  workspace_id = var.infisical_workspace_id
+  folder_path  = "/opentofu"
+}
+
+ephemeral "infisical_secret" "bw_client_secret" {
+  name         = "BW_CLIENT_SECRET"
+  env_slug     = "prod"
+  workspace_id = var.infisical_workspace_id
+  folder_path  = "/opentofu"
+}
+
+ephemeral "infisical_secret" "pve_api_token" {
+  name         = "PVE_API_TOKEN"
+  env_slug     = "prod"
+  workspace_id = var.infisical_workspace_id
+  folder_path  = "/opentofu"
+}
+
+locals {
+  provider_secrets = {
+    bw_email           = ephemeral.infisical_secret.bw_email.value
+    bw_master_password = ephemeral.infisical_secret.bw_master_password.value
+    bw_client_id       = ephemeral.infisical_secret.bw_client_id.value
+    bw_client_secret   = ephemeral.infisical_secret.bw_client_secret.value
+    pve_api_token      = ephemeral.infisical_secret.pve_api_token.value
   }
 }
 
@@ -37,10 +86,10 @@ data "bitwarden_item_ssh_key" "proxmox" {
 }
 
 provider "bitwarden" {
-  email           = var.bw_email
-  master_password = var.bw_master_password
-  client_id       = var.bw_client_id
-  client_secret   = var.bw_client_secret
+  email           = local.provider_secrets.bw_email
+  master_password = local.provider_secrets.bw_master_password
+  client_id       = local.provider_secrets.bw_client_id
+  client_secret   = local.provider_secrets.bw_client_secret
   server          = var.bw_server
 
   experimental {
@@ -50,7 +99,7 @@ provider "bitwarden" {
 
 provider "proxmox" {
   endpoint  = var.proxmox_url
-  api_token = var.proxmox_api_token
+  api_token = local.provider_secrets.pve_api_token
   insecure  = true
 
   ssh {
@@ -63,4 +112,14 @@ EOF
 }
 
 provider "cloudflare" {
+}
+
+provider "infisical" {
+  host = "https://eu.infisical.com"
+  auth = {
+    universal = {
+      client_id     = var.infisical_client_id
+      client_secret = var.infisical_client_secret
+    }
+  }
 }
