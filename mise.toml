@@ -6,9 +6,14 @@ opentofu = "latest"
 pipx = "latest"
 python = "latest"
 sops = "latest"
+uv = "latest"
 
 [env]
 _.file = '.env.local'
+_.python.venv = { path = ".venv" }
+
+[settings]
+python.uv_venv_auto = true
 
 [tasks.tofu]
 dir = "tofu"

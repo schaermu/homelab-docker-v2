@@ -2,7 +2,11 @@
   hosts: dns
   become: true
   roles:
-    - role: pve_server
+    - pve_server
+    - geerlingguy.pip
+  vars:
+    pip_install_packages:
+      - name: infisicalsdk
 
 - name: Setup technitium user and install location
   hosts: dns
@@ -104,10 +108,16 @@
   become: false
   gather_facts: true
   tasks:
-    - name: Set api_url fact
+    - name: Set facts
       ansible.builtin.set_fact:
         api_url: "http://{{ ansible_facts.default_ipv4.address }}"
     
+    - name: Read secrets from Infisical
+      ansible.builtin.include_role:
+        name: infisical
+        public: true
+      when: true
+
     - name: Login and get session token
       effectivelywild.technitium_dns.technitium_dns_login:
         api_url: "{{ api_url }}"
@@ -122,11 +132,11 @@
         api_url: "{{ api_url }}"
         api_token: "{{ login_result.token }}"
         username: "schaermu"
-        password: "{{ lookup('env', 'TECHNITIUM_DNS_PASSWORD') }}"
+        password: "{{ secrets.secrets['MANAGEMENT_PASSWORD'] }}"
         displayName: "Schaermu"
         validate_certs: false
       when: login_result is succeeded
-    
+
     - name: Give new user admin privileges
       effectivelywild.technitium_dns.technitium_dns_set_user_details:
         api_url: "{{ api_url }}"
@@ -137,20 +147,11 @@
         validate_certs: false
       when: login_result is succeeded
 
-- name: Setup DNS zones and records
-  hosts: dns
-  become: false
-  gather_facts: true
-  tasks:
-    - name: Set api_url fact
-      ansible.builtin.set_fact:
-        api_url: "http://{{ ansible_facts.default_ipv4.address }}"
-
-    - name: Login and get session token
+    - name: Login with new user and refresh session token
       effectivelywild.technitium_dns.technitium_dns_login:
         api_url: "{{ api_url }}"
         username: "schaermu"
-        password: "{{ lookup('env', 'TECHNITIUM_DNS_PASSWORD') }}"
+        password: "{{ secrets.secrets['MANAGEMENT_PASSWORD'] }}"
         validate_certs: false
       register: login_result
       

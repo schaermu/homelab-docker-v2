@@ -19,6 +19,10 @@ variable "cloudflare_state_endpoint_url" {
   default = "https://59469c6e9b7a0c72d7efceab1b0152b5.r2.cloudflarestorage.com"
 }
 
+variable "infisical_server_url" {
+  type    = string
+  default = "https://app.infisical.com"
+}
 variable "infisical_workspace_id" { type = string }
 variable "infisical_client_id" { type = string }
 variable "infisical_client_secret" {

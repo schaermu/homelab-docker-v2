@@ -2,14 +2,24 @@
   hosts: bastion
   become: true
   roles:
-    - role: pve_server
+    - pve_server
+    - geerlingguy.pip
+  vars:
+    pip_install_packages:
+      - name: infisicalsdk
 
 - name: Setup bastion user
   hosts: bastion
   become: true
   tasks:
+    - name: Read secrets from Infisical
+      ansible.builtin.include_role:
+        name: infisical
+        public: true
+      when: true
+
     - name: Generate password password hash using shell command
-      ansible.builtin.shell: "echo '{{ lookup('env', 'BASTION_USER_PASSWORD') }}' | openssl passwd -6 -stdin"
+      ansible.builtin.shell: "echo '{{ secrets.secrets['MANAGEMENT_PASSWORD'] }}' | openssl passwd -6 -stdin"
       register: bastion_user_password_hash
       no_log: true
     
@@ -68,7 +78,13 @@
 
 - name: Setup Tailscale on bastion host
   hosts: bastion
+  pre_tasks:
+    - name: Read secrets from Infisical
+      ansible.builtin.include_role:
+        name: infisical
+        public: true
+      when: true
   roles:
     - role: artis3n.tailscale.machine
       vars:
-        tailscale_authkey: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"
+        tailscale_authkey: "{{ secrets.secrets['TAILSCALE_AUTH_KEY'] }}"

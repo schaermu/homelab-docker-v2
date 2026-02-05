@@ -1,0 +1,23 @@
+- name: Set facts
+  ansible.builtin.set_fact:
+    infisical_server_url: "{{ lookup('env', 'TF_VAR_infisical_server_url') }}"
+    infisical_project_id: "{{ lookup('env', 'TF_VAR_infisical_workspace_id') }}"
+    infisical_client_id: "{{ lookup('env', 'TF_VAR_infisical_client_id') }}"
+    infisical_client_secret: "{{ lookup('env', 'TF_VAR_infisical_client_secret') }}"
+
+- name: Login to Infisical
+  infisical.vault.login:
+    url: "{{ infisical_server_url }}"
+    auth_method: universal_auth
+    universal_auth_client_id: "{{ infisical_client_id }}"
+    universal_auth_client_secret: "{{ infisical_client_secret }}"
+  register: infisical_login
+
+- name: Read all secrets as dictionary
+  infisical.vault.read_secrets:
+    login_data: "{{ infisical_login.login_data }}"
+    project_id: "{{ infisical_project_id }}"
+    env_slug: "prod"
+    path: "/_ansible"
+    as_dict: true
+  register: secrets

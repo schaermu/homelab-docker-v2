@@ -2,7 +2,11 @@
   hosts: [workers, managers]
   become: true
   roles:
-    - role: pve_server
+    - pve_server
+    - geerlingguy.pip
+  vars:
+    pip_install_packages:
+      - name: infisicalsdk
 
 - name: Setup keepalived
   hosts: [managers]

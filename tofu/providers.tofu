@@ -40,35 +40,35 @@ ephemeral "infisical_secret" "bw_email" {
   name         = "BW_EMAIL"
   env_slug     = "prod"
   workspace_id = var.infisical_workspace_id
-  folder_path  = "/opentofu"
+  folder_path  = "/_opentofu"
 }
 
 ephemeral "infisical_secret" "bw_master_password" {
   name         = "BW_MASTER_PASSWORD"
   env_slug     = "prod"
   workspace_id = var.infisical_workspace_id
-  folder_path  = "/opentofu"
+  folder_path  = "/_opentofu"
 }
 
 ephemeral "infisical_secret" "bw_client_id" {
   name         = "BW_CLIENT_ID"
   env_slug     = "prod"
   workspace_id = var.infisical_workspace_id
-  folder_path  = "/opentofu"
+  folder_path  = "/_opentofu"
 }
 
 ephemeral "infisical_secret" "bw_client_secret" {
   name         = "BW_CLIENT_SECRET"
   env_slug     = "prod"
   workspace_id = var.infisical_workspace_id
-  folder_path  = "/opentofu"
+  folder_path  = "/_opentofu"
 }
 
 ephemeral "infisical_secret" "pve_api_token" {
   name         = "PVE_API_TOKEN"
   env_slug     = "prod"
   workspace_id = var.infisical_workspace_id
-  folder_path  = "/opentofu"
+  folder_path  = "/_opentofu"
 }
 
 locals {

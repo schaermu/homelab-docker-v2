@@ -1,24 +1,42 @@
-- name: Deploy initial secrets
+- name: Load secrets from Infisical
   hosts: managers[0]
   tasks:
-    - name: Look for secret files
-      delegate_to: localhost
-      ansible.builtin.find:
-        paths:
-          - "../../secrets"
-        file_type: file
-        patterns:
-          - '*'
-        read_whole_file: false
-        recurse: true
-      register: secret_type_files
-    - name: Create docker secrets
+    - name: Set Infisical variables from env
+      ansible.builtin.set_fact:
+        server_url: "{{ lookup('env', 'TF_VAR_infisical_server_url') }}"
+        project_id: "{{ lookup('env', 'TF_VAR_infisical_workspace_id') }}"
+        client_id: "{{ lookup('env', 'TF_VAR_infisical_client_id') }}"
+        client_secret: "{{ lookup('env', 'TF_VAR_infisical_client_secret') }}"
+
+    - name: Login to Infisical
+      infisical.vault.login:
+        url: "{{ server_url }}"
+        auth_method: universal_auth
+        universal_auth_client_id: "{{ client_id }}"
+        universal_auth_client_secret: "{{ client_secret }}"
+      register: infisical_login
+
+    - name: Compile DocoCD .env file from jinja2 template
+      ansible.builtin.set_fact:
+        dococd_env_content: "{{ lookup('template', './files/.env.dococd.j2', secrets=secrets, infisical_site_url=server_url) }}"
+      vars:
+        secrets: "{{ lookup('infisical.vault.read_secrets', as_dict=True, login_data=infisical_login.login_data, project_id=project_id, path='/_ansible', env_slug='prod') }}"
+    
+    - name: Create docker secret for DocoCD .env
       community.docker.docker_secret:
-        name: "{{ item.path | basename }}"
-        data: "{{ lookup('file', item.path) | b64encode }}"
-        data_is_b64: true
+        name: dotenv-dococd
         state: present
-      loop: "{{ secret_type_files.files }}"
+        data: "{{ dococd_env_content | b64encode }}"
+        data_is_b64: true
+    
+    - name: Create docker secret for Cloudflare Tunnel credentials
+      community.docker.docker_secret:
+        name: cloudflare-tunnel-token
+        state: present
+        data: "{{ secrets['CLOUDFLARE_TUNNEL_TOKEN'] | b64encode }}"
+        data_is_b64: true
+      vars:
+        secrets: "{{ lookup('infisical.vault.read_secrets', as_dict=True, login_data=infisical_login.login_data, project_id=project_id, path='/_ansible', env_slug='prod', secret_name='CLOUDFLARE_TUNNEL_TOKEN') }}"
 
 - name: Create default overlay networks
   hosts: managers[0]
