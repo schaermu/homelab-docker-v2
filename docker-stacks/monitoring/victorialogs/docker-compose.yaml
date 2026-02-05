@@ -13,7 +13,7 @@ volumes:
 networks:
   default:
     name: vlog-net
-  metrics-net:
+  metric-net:
     external: true
 
 services:

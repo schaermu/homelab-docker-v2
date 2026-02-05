@@ -1,6 +1,6 @@
 networks:
   default:
-    name: metrics-net
+    name: metric-net
     external: true
 
 volumes:

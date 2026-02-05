@@ -1,4 +1,4 @@
-- name: Deploy secrets
+- name: Deploy initial secrets
   hosts: managers[0]
   tasks:
     - name: Look for secret files
@@ -12,73 +12,51 @@
         read_whole_file: false
         recurse: true
       register: secret_type_files
-    - name: Only keep files not starting with '.env' (those are deployed using SOPS)
-      ansible.builtin.set_fact:
-        secret_files: "{{ secret_type_files.files | rejectattr('path', 'search', '/\\.env/') | list }}"
     - name: Create docker secrets
       community.docker.docker_secret:
         name: "{{ item.path | basename }}"
         data: "{{ lookup('file', item.path) | b64encode }}"
         data_is_b64: true
         state: present
-      loop: "{{ secret_files }}"
+      loop: "{{ secret_type_files.files }}"
 
 - name: Create default overlay networks
   hosts: managers[0]
   become: true
   tasks:
-    - name: Create traefik proxy network
+    - name: Create overlay networks
       community.docker.docker_network:
-        name: traefik-public
+        name: "{{ item.name }}"
         driver: overlay
         attachable: true
         state: present
         ipam_config:
-          - subnet: 10.0.2.0/24
-            gateway: 10.0.2.1
-    - name: Create cloudflared tunnel network
-      community.docker.docker_network:
-        name: cloudflare-tunnel
-        driver: overlay
-        attachable: true
-        state: present
-        ipam_config:
-          - subnet: 10.0.3.0/24
-            gateway: 10.0.3.1
-    - name: Create metrics network
-      community.docker.docker_network:
-        name: metrics-net
-        driver: overlay
-        attachable: true
-        state: present
-        ipam_config:
-          - subnet: 10.0.5.0/24
-            gateway: 10.0.5.1
+          - subnet: "{{ item.ipam_subnet }}"
+            gateway: "{{ item.ipam_gateway }}"
+      loop:
+        - { name: traefik-public, ipam_subnet: 10.0.10.0/24, ipam_gateway: 10.0.10.1 }
+        - { name: cloudflare-net, ipam_subnet: 10.0.11.0/24, ipam_gateway: 10.0.11.1 }
+        - { name: metric-net, ipam_subnet: 10.0.12.0/24, ipam_gateway: 10.0.12.1 }
 
-- name: Deploy DocoCD stack
+- name: Deploy initial stacks
   hosts: managers[0]
   tasks:
-    - name: Copy stack file
+    - name: Set stack list
+      ansible.builtin.set_fact:
+        stack_list:
+          - doco-cd-docker-compose.yaml
+          - cloudflared-docker-compose.yaml
+    
+    - name: Copy stack files
       ansible.builtin.copy:
-        src: ./files/doco-cd-docker-compose.yaml
-        dest: /tmp/dococd-docker-compose.yaml
-    - name: Deploy DocoCD stack
+        src: "./files/{{ item }}"
+        dest: "/tmp/{{ item }}"
+      loop: "{{ stack_list }}"
+    
+    - name: Deploy stacks
       community.docker.docker_stack:
-        name: doco-cd
+        name: bootstrap
         state: present
         compose:
-          - /tmp/dococd-docker-compose.yaml
-
-- name: Deploy Cloudflared Tunnel stack
-  hosts: managers[0]
-  tasks:
-    - name: Copy stack file
-      ansible.builtin.copy:
-        src: ./files/cloudflared-docker-compose.yaml
-        dest: /tmp/cloudflared-docker-compose.yaml
-    - name: Deploy Cloudflared stack
-      community.docker.docker_stack:
-        name: cloudflared
-        state: present
-        compose:
-          - /tmp/cloudflared-docker-compose.yaml
+          - /tmp/{{ item }}
+      loop: "{{ stack_list }}"

@@ -10,6 +10,8 @@ volumes:
 networks:
   cloudflare-tunnel:
     external: true
+  db-backup-net:
+    external: true
 
 services:
   init_volumes:
@@ -34,14 +36,14 @@ services:
       cloudflare-tunnel:
         aliases:
           - pocket-id
-    env_file:
-      - secrets/.env.pocketid.enc
     environment:
       TZ: Europe/Zurich
       APP_URL: https://auth.schaermu.ch
       PUID: "3004"
       PGID: "3004"
       TRUST_PROXY: "true"
+      ENCRYPTION_KEY: ${POCKETID_ENCRYPTION_KEY}
+      DB_CONNECTION_STRING: ${POCKETID_DB_CONNECTION_STRING}
     volumes:
       - type: volume
         source: data
@@ -57,15 +59,19 @@ services:
       start_period: 10s
   db:
     image: postgres:17-alpine
-    env_file:
-      - secrets/.env.pocketid.enc
     environment:
       POSTGRES_USER: pocketid
       POSTGRES_DB: pocketid
+      POSTGRES_PASSWORD: ${POCKETID_DB_PASSWORD}
     volumes:
       - type: volume
         source: db-data
         target: /var/lib/postgresql/data
+    networks:
+      default:
+      db-backup-net:
+        aliases:
+          - pocketid-db
     deploy:
       placement:
         constraints:
@@ -76,26 +82,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-  db-backup:
-    image: tiredofit/db-backup:latest
-    volumes:
-      - type: volume
-        source: db-data
-        target: /backup
-    env_file:
-      - secrets/.env.pocketid.enc
-    environment:
-      TIMEZONE: Europe/Zurich
-      DEFAULT_BACKUP_LOCATION: S3
-      DEFAULT_S3_PROTOCOL: http
-      DEFAULT_S3_HOST: 192.168.1.244:9000
-      DEFAULT_S3_BUCKET: postgres-backups
-      DEFAULT_S3_PATH: pocket-id
-      DB01_TYPE: pgsql
-      DB01_HOST: db
-      DB01_NAME: pocketid
-      DB01_USER: pocketid
-    deploy:
-      placement:
-        constraints:
-          - node.labels.db==true

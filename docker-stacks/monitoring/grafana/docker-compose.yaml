@@ -17,7 +17,7 @@ networks:
     name: grafana-net
   cloudflare-tunnel:
     external: true
-  metrics-net:
+  metric-net:
     external: true
   vlog-net:
     external: true
@@ -53,12 +53,14 @@ services:
           nocopy: true
     networks:
       default:
-      metrics-net:
+      metric-net:
       vlog-net:
       cloudflare-tunnel:
         aliases:
           - grafana
-    env_file:
-      - secrets/.env.grafana.enc
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${GRAFANA_OAUTH_CLIENT_ID}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${GRAFANA_OAUTH_CLIENT_SECRET}
     deploy:
       replicas: 1

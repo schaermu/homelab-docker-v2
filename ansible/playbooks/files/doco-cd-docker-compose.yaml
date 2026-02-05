@@ -7,13 +7,7 @@ volumes:
       device: ":/mnt/MAIN_POOL/data/docker-volumes"
 
 secrets:
-  sops_age_key.txt:
-    external: true
-  github_repository_pat:
-    external: true
-  doco_cd_webhook_secret:
-    external: true
-  doco_cd_api_secret:
+  dotenv_dococd:
     external: true
 
 networks:
@@ -37,12 +31,13 @@ services:
           nocopy: true
   app:
     image: ghcr.io/kimdre/doco-cd:0.57.0
+    env_file:
+      - /var/run/secrets/dotenv_dococd
     environment:
       TZ: Europe/Zurich
-      GIT_ACCESS_TOKEN_FILE: /run/secrets/github_repository_pat
-      SOPS_AGE_KEY_FILE: /run/secrets/sops_age_key.txt
-      API_SECRET_FILE: /run/secrets/doco_cd_api_secret
-      WEBHOOK_SECRET_FILE: /run/secrets/doco_cd_webhook_secret
+      SECRET_PROVIDER: infisical
+      SECRET_PROVIDER_SITE_URL: https://eu.infisical.com
+      SECRET_PROVIDER_CLIENT_ID: 6f8e00f0-daad-4a0c-9e86-e02e12ddb297
       DOCKER_QUIET_DEPLOY: "false"
       LOG_LEVEL: info
     depends_on:

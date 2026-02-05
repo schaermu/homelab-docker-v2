@@ -1,0 +1,22 @@
+networks:
+  default:
+    name: db-backup-net
+
+services:
+  db-backup:
+    image: tiredofit/db-backup:latest
+    environment:
+      TIMEZONE: Europe/Zurich
+      DEFAULT_BACKUP_LOCATION: S3
+      DEFAULT_S3_PROTOCOL: http
+      DEFAULT_S3_HOST: nas.lab.schaermu.ch:9000
+      DEFAULT_S3_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      DEFAULT_S3_SECRET_KEY: ${MINIO_SECRET_KEY}
+      DEFAULT_S3_BUCKET: postgres-backups
+      DEFAULT_BACKUP_BEGIN: "0200"
+      DB01_TYPE: pgsql
+      DB01_HOST: pocketid-db
+      DB01_NAME: pocketid
+      DB01_USER: pocketid
+      DB01_PASSWORD: ${POCKETID_DB_PASSWORD}
+      DB01_S3_PATH: pocket-id

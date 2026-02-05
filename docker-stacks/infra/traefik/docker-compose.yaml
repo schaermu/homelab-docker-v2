@@ -34,9 +34,12 @@ services:
           nocopy: true
   proxy:
     image: traefik:v3.6.4
-    env_file:
-      - secrets/.env.cloudflare.enc
-      - secrets/.env.oidc-auth.enc
+    environment:
+      CF_API_EMAIL: ${TRAEFIK_CF_API_EMAIL}
+      CF_DNS_API_TOKEN: ${TRAEFIK_CF_DNS_API_TOKEN}
+      OIDC_CLIENT_ID: ${TRAEFIK_OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${TRAEFIK_OIDC_CLIENT_SECRET}
+      OIDC_SECRET: ${TRAEFIK_OIDC_SECRET}
     ports:
       - target: 80
         published: 80
