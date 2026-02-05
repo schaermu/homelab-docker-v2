@@ -79,6 +79,8 @@
       community.docker.docker_swarm:
         state: present
         advertise_addr: "{{ ansible_facts.default_ipv4.address }}"
+        default_addr_pool:
+          - 10.0.128.0/17
     - name: Get swarm info
       community.docker.docker_swarm_info:
       register: swarm_info
