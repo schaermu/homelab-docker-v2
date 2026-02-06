@@ -60,6 +60,9 @@ services:
         aliases:
           - doco-cd
     deploy:
+      placement:
+        constraints:
+          - node.role==manager
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.doco-cd.rule=Host(`doco-cd.lab.schaermu.ch`)"
