@@ -35,7 +35,7 @@ services:
         target: /mnt/docker-volumes
         volume:
           nocopy: true
-  app:
+  doco-cd:
     image: ghcr.io/kimdre/doco-cd:0.61.0
     secrets:
       - dococd-secrets-client-secret
