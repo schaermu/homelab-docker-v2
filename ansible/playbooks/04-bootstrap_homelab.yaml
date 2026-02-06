@@ -57,21 +57,21 @@
     - name: Set stack list
       ansible.builtin.set_fact:
         stack_list:
-          - doco-cd-docker-compose.yaml
-          - cloudflared-docker-compose.yaml
+          - { name: "doco-cd", file: "doco-cd-docker-compose.yaml" }
+          - { name: "cloudflared", file: "cloudflared-docker-compose.yaml" }
     
     - name: Copy stack files
       ansible.builtin.copy:
-        src: "./files/{{ item }}"
-        dest: "/tmp/{{ item }}"
+        src: "./files/{{ item.file }}"
+        dest: "/tmp/{{ item.file }}"
       loop: "{{ stack_list }}"
     
     - name: Deploy stacks
       community.docker.docker_stack:
-        name: bootstrap
+        name: "{{ item.name }}"
         state: present
         compose:
-          - /tmp/{{ item }}
+          - /tmp/{{ item.file }}
       loop: "{{ stack_list }}"
   tags:
     - bootstrap

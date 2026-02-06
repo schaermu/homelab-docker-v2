@@ -8,7 +8,7 @@ secrets:
     external: true
 
 services:
-  cf-tunnel:
+  tunnel:
     image: cloudflare/cloudflared:latest
     secrets:
       - cloudflare-tunnel-token
