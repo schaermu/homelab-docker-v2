@@ -42,5 +42,5 @@ usage = '''
 arg "<stack>" help="Target stack"
 '''
 run = '''
-curl -H "x-api-key: ${DOCOCD_API_KEY}" https://doco-cd.lab.schaermu.ch/v1/api/stack/${usage_stack?}/restart -X POST
+curl -H "x-api-key: ${DOCOCD_API_KEY}" https://doco-cd.schaermu.ch/v1/api/stack/${usage_stack?}/restart -X POST
 '''
