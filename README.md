@@ -54,3 +54,10 @@ $ qemu-img convert -O qcow2 -c -o preallocation=off debian-13-genericcloud-amd64
 ## Configure machines
 
 1. Run `mise run-playbook setup_docker_swarm` to configure docker hosts for swarm mode.
+
+# Maintenance
+
+## Import Pocket ID seed database
+
+1. Copy pocketid-seed.zip to swarm node currently running pocket-id_app workload
+2. Run `cat ./pocketid-seed.zip | docker compose run pocket-id ./pocket-id import --yes --path -`
