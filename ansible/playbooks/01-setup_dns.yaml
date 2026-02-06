@@ -226,10 +226,11 @@
         resolvectl domain {{ ansible_facts.default_ipv4.interface }} lab.schaermu.ch
 
 - name: Creating local SSH config file
-  hosts: ssh
+  hosts: localhost
   roles:
     - local-ssh-config
   vars:
+    filename: dns
     host_groups:
       - name: dns
         hosts: "{{ groups['dns'] }}"

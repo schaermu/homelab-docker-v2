@@ -78,10 +78,11 @@
         tailscale_authkey: "{{ secrets.secrets['TAILSCALE_AUTH_KEY'] }}"
 
 - name: Creating local SSH config file
-  hosts: ssh
+  hosts: localhost
   roles:
     - local-ssh-config
   vars:
+    filename: bastion
     host_groups:
       - name: bastion
         hosts: "{{ groups['ssh'] }}"
