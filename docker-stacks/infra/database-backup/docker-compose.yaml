@@ -1,22 +1,40 @@
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+
 networks:
   default:
     name: db-backup-net
 
 services:
-  db-backup:
+  init_volumes:
+    user: "3004:3004"
+    image: busybox
+    command: >
+      sh -c "mkdir -p /mnt/docker-volumes/db-backup-data"
+    deploy:
+      replicas: 1
+      mode: replicated-job
+    volumes:
+      - type: volume
+        source: data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  app:
     image: tiredofit/db-backup:latest
     environment:
       TIMEZONE: Europe/Zurich
-      DEFAULT_BACKUP_LOCATION: S3
-      DEFAULT_S3_PROTOCOL: http
-      DEFAULT_S3_HOST: nas.lab.schaermu.ch:9000
-      DEFAULT_S3_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      DEFAULT_S3_SECRET_KEY: ${MINIO_SECRET_KEY}
-      DEFAULT_S3_BUCKET: postgres-backups
       DEFAULT_BACKUP_BEGIN: "0200"
+      USER_DBBACKUP: "3004"
+      GROUP_DBBACKUP: "3004"
       DB01_TYPE: pgsql
       DB01_HOST: pocketid-db
       DB01_NAME: pocketid
       DB01_USER: pocketid
       DB01_PASSWORD: ${POCKETID_DB_PASSWORD}
-      DB01_S3_PATH: pocket-id
+      DB01_FILESYSTEM_PATH: /backups/pocket-id
