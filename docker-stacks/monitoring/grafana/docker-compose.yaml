@@ -15,7 +15,7 @@ volumes:
 networks:
   default:
     name: grafana-net
-  cloudflare-tunnel:
+  cloudflare-net:
     external: true
   metric-net:
     external: true
@@ -55,7 +55,7 @@ services:
       default:
       metric-net:
       vlog-net:
-      cloudflare-tunnel:
+      cloudflare-net:
         aliases:
           - grafana
     environment:

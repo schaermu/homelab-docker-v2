@@ -8,7 +8,7 @@ volumes:
   db-data:
 
 networks:
-  cloudflare-tunnel:
+  cloudflare-net:
     external: true
   db-backup-net:
     external: true
@@ -33,7 +33,7 @@ services:
     user: "3004:3004"
     networks:
       default:
-      cloudflare-tunnel:
+      cloudflare-net:
         aliases:
           - pocket-id
     environment:
