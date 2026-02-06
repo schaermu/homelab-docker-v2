@@ -7,11 +7,17 @@ volumes:
       device: ":/mnt/MAIN_POOL/data/docker-volumes"
 
 secrets:
-  dotenv-dococd:
+  dococd-secrets-client-secret:
+    external: true
+  dococd-git-access-token:
+    external: true
+  dococd-api-secret:
+    external: true
+  dococd-webhook-secret:
     external: true
 
 networks:
-  cloudflare-tunnel:
+  cloudflare-net:
     external: true
 
 services:
@@ -30,18 +36,27 @@ services:
         volume:
           nocopy: true
   app:
-    image: ghcr.io/kimdre/doco-cd:0.57.0
-    env_file:
-      - /var/run/secrets/dotenv-dococd
+    image: ghcr.io/kimdre/doco-cd:0.61.0
+    secrets:
+      - dococd-secrets-client-secret
+      - dococd-git-access-token
+      - dococd-api-secret
+      - dococd-webhook-secret
     environment:
       TZ: Europe/Zurich
+      API_SECRET_FILE: /run/secrets/dococd-api-secret
+      GIT_ACCESS_TOKEN_FILE: /run/secrets/dococd-git-access-token
+      WEBHOOK_SECRET_FILE: /run/secrets/dococd-webhook-secret
       SECRET_PROVIDER: infisical
+      SECRET_PROVIDER_SITE_URL: https://eu.infisical.com
+      SECRET_PROVIDER_CLIENT_ID: 6f8e00f0-daad-4a0c-9e86-e02e12ddb297
+      SECRET_PROVIDER_CLIENT_SECRET_FILE: /run/secrets/dococd-secrets-client-secret
       DOCKER_QUIET_DEPLOY: "false"
       LOG_LEVEL: info
     depends_on:
       - init_volumes
     networks:
-      cloudflare-tunnel:
+      cloudflare-net:
         aliases:
           - doco-cd
     deploy:

@@ -16,51 +16,29 @@
     ansible.builtin.package:
       name: keepalived
       state: present
+
   - name: Determine other manager nodes
     set_fact:
       other_managers: "{{ groups.managers|difference([inventory_hostname]) }}"
+
   - name: Copy keepalived configuration
     ansible.builtin.template:
       src: ./templates/keepalived.conf.j2
       dest: /etc/keepalived/keepalived.conf
     vars:
       vip_address: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"
+
   - name: Copy traefik healthcheck script
     ansible.builtin.copy:
       src: ./files/traefik-healthcheck.sh
       dest: /etc/keepalived/healthcheck.sh
       mode: '0755'
+
   - name: Ensure keepalived is started and enabled
     ansible.builtin.service:
       name: keepalived
       state: started
       enabled: true
-  tags:
-    - keepalived
-
-- name: Add docker-apps user
-  hosts: [workers, managers]
-  become: true
-  tasks:
-    - name: Ensure docker-apps group exists
-      ansible.builtin.group:
-        name: "{{ lookup('env', 'DOCKER_USER') }}"
-        state: present
-        gid: "{{ lookup('env', 'DOCKER_GID') }}"
-    - name: Ensure docker-apps user exists
-      ansible.builtin.user:
-        name: "{{ lookup('env', 'DOCKER_USER') }}"
-        state: present
-        create_home: false
-        uid: "{{ lookup('env', 'DOCKER_UID') }}"
-        group: "{{ lookup('env', 'DOCKER_USER') }}"
-    - name: Add docker-apps user to docker group
-      ansible.builtin.user:
-        name: "{{ lookup('env', 'DOCKER_USER') }}"
-        groups: docker
-        append: true
-  tags:
-    - swarm
 
 - name: Install docker
   hosts: [workers, managers]
@@ -72,8 +50,30 @@
   roles:
     - role: geerlingguy.pip
     - role: geerlingguy.docker
-  tags:
-    - swarm
+
+- name: Add docker-apps user
+  hosts: [workers, managers]
+  become: true
+  tasks:
+    - name: Ensure docker-apps group exists
+      ansible.builtin.group:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        state: present
+        gid: "{{ lookup('env', 'DOCKER_GID') }}"
+
+    - name: Ensure docker-apps user exists
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        state: present
+        create_home: false
+        uid: "{{ lookup('env', 'DOCKER_UID') }}"
+        group: "{{ lookup('env', 'DOCKER_USER') }}"
+
+    - name: Add docker-apps user to docker group
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'DOCKER_USER') }}"
+        groups: docker
+        append: true
 
 - name: Initialize Docker Swarm
   hosts: managers[0]
@@ -88,8 +88,6 @@
     - name: Get swarm info
       community.docker.docker_swarm_info:
       register: swarm_info
-  tags:
-    - swarm
 
 - name: Join remaining managers to Swarm
   hosts: managers[1:]
@@ -103,8 +101,6 @@
             "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
           ]
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Manager }}"
-  tags:
-    - swarm
 
 - name: Join workers to Swarm
   hosts: workers
@@ -118,8 +114,6 @@
             "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
           ]
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Worker }}"
-  tags:
-    - swarm
 
 - name: Label worker nodes for local storage
   hosts: managers[0]
@@ -135,14 +129,13 @@
         hostname: "{{ groups['workers'][2] }}"
         labels:
           ssd_storage: "true"
-  tags:
-    - swarm
 
 - name: Creating local SSH config file
-  hosts: ssh
+  hosts: localhost
   roles:
     - local-ssh-config
   vars:
+    filename: docker-swarm
     host_groups:
       - name: manager
         hosts: "{{ groups['managers'] }}"

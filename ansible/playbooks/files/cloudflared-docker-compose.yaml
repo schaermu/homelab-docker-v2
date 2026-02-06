@@ -1,19 +1,19 @@
 networks:
   default:
-    name: cloudflare-tunnel
+    name: cloudflare-net
     external: true
 
 secrets:
-  cloudflared_tunnel_token:
+  cloudflare-tunnel-token:
     external: true
 
 services:
   tunnel:
     image: cloudflare/cloudflared:latest
     secrets:
-      - cloudflared_tunnel_token
+      - cloudflare-tunnel-token
     environment:
-      TUNNEL_TOKEN_FILE: /run/secrets/cloudflared_tunnel_token
+      TUNNEL_TOKEN_FILE: /run/secrets/cloudflare-tunnel-token
     command: tunnel --no-autoupdate --protocol http2 run
     networks:
       - default
