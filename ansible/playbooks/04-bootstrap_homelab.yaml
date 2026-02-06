@@ -49,6 +49,7 @@
         - { name: traefik-public, ipam_subnet: 10.0.10.0/24, ipam_gateway: 10.0.10.1 }
         - { name: cloudflare-net, ipam_subnet: 10.0.11.0/24, ipam_gateway: 10.0.11.1 }
         - { name: metric-net, ipam_subnet: 10.0.12.0/24, ipam_gateway: 10.0.12.1 }
+        - { name: vlog-net, ipam_subnet: 10.0.13.0/24, ipam_gateway: 10.0.13.1 }
 
 - name: Deploy initial stacks
   hosts: managers[0]
