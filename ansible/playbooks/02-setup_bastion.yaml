@@ -9,20 +9,9 @@
       - name: infisicalsdk
 
 - name: Setup bastion user
-  hosts: bastion
+  hosts: ssh
   become: true
   tasks:
-    - name: Read secrets from Infisical
-      ansible.builtin.include_role:
-        name: infisical
-        public: true
-      when: true
-
-    - name: Generate password password hash using shell command
-      ansible.builtin.shell: "echo '{{ secrets.secrets['MANAGEMENT_PASSWORD'] }}' | openssl passwd -6 -stdin"
-      register: bastion_user_password_hash
-      no_log: true
-    
     - name: Ensure bastion group exists
       ansible.builtin.group:
         name: bastion
@@ -45,7 +34,6 @@
         uid: 4004
         group: bastion
         shell: /bin/bash
-        password:  "{{ bastion_user_password_hash.stdout }}"
   
     - name: Set up authorized keys for bastion user
       ansible.posix.authorized_key:
@@ -56,8 +44,8 @@
         - public_keys/schaermu@klappchuebu.pub
         - public_keys/schaermu@donnerchuebu.pub
 
-- name: Setup and configure SSH daemon on bastion host
-  hosts: bastion
+- name: Setup and configure SSH daemon
+  hosts: ssh
   become: true
   tasks:
     - name: Ensure SSH daemon is installed
@@ -67,17 +55,17 @@
 
     - name: Copy SSH daemon configuration
       ansible.builtin.template:
-        src: ./files/sshd_config.j2
+        src: ./templates/sshd_config.j2
         dest: /etc/ssh/sshd_config
 
-    - name: Ensure SSH daemon is started and enabled
+    - name: Ensure SSH daemon is restarted and enabled
       ansible.builtin.service:
         name: ssh
-        state: started
+        state: restarted
         enabled: true
 
-- name: Setup Tailscale on bastion host
-  hosts: bastion
+- name: Setup & connect Tailscale
+  hosts: ssh
   pre_tasks:
     - name: Read secrets from Infisical
       ansible.builtin.include_role:
@@ -88,3 +76,12 @@
     - role: artis3n.tailscale.machine
       vars:
         tailscale_authkey: "{{ secrets.secrets['TAILSCALE_AUTH_KEY'] }}"
+
+- name: Creating local SSH config file
+  hosts: ssh
+  roles:
+    - local-ssh-config
+  vars:
+    host_groups:
+      - name: bastion
+        hosts: "{{ groups['ssh'] }}"

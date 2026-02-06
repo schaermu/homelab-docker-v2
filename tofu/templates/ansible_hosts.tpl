@@ -1,7 +1,7 @@
 # generated ansible inventory
 # created: ${timestamp()}
 
-[bastion]
+[ssh]
 ${bastion.name} ansible_host=${bastion.ip}
 
 [dns]

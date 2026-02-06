@@ -21,7 +21,7 @@
       other_managers: "{{ groups.managers|difference([inventory_hostname]) }}"
   - name: Copy keepalived configuration
     ansible.builtin.template:
-      src: ./files/keepalived.conf.j2
+      src: ./templates/keepalived.conf.j2
       dest: /etc/keepalived/keepalived.conf
     vars:
       vip_address: "{{ lookup('env', 'TRAEFIK_VIRTUAL_IP') }}"
@@ -137,3 +137,14 @@
           ssd_storage: "true"
   tags:
     - swarm
+
+- name: Creating local SSH config file
+  hosts: ssh
+  roles:
+    - local-ssh-config
+  vars:
+    host_groups:
+      - name: manager
+        hosts: "{{ groups['managers'] }}"
+      - name: worker
+        hosts: "{{ groups['workers'] }}"

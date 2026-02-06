@@ -18,7 +18,7 @@
 
     - name: Compile DocoCD .env file from jinja2 template
       ansible.builtin.set_fact:
-        dococd_env_content: "{{ lookup('template', './files/.env.dococd.j2', secrets=secrets, infisical_site_url=server_url) }}"
+        dococd_env_content: "{{ lookup('template', './templates/.env.dococd.j2', secrets=secrets, infisical_site_url=server_url) }}"
       vars:
         secrets: "{{ lookup('infisical.vault.read_secrets', as_dict=True, login_data=infisical_login.login_data, project_id=project_id, path='/_ansible', env_slug='prod') }}"
     

@@ -1,0 +1,28 @@
+- local_action: set_fact
+  args:
+    home: "{{ lookup('env', 'HOME') }}"
+
+- name: Ensure local SSH include directory exists
+  local_action: ansible.builtin.file
+  args:
+    path: "{{ home }}/.ssh/config.d"
+    state: directory
+    mode: 0755
+
+- name: Ensure include directory is included in main SSH config
+  local_action: ansible.builtin.lineinfile
+  args:
+    path: "{{ home }}/.ssh/config"
+    regexp: '^Include config\.d/\*'
+    line: 'Include config.d/*'
+    insertbefore: BOF
+    state: present
+    create: true
+    mode: 0644
+
+- name: Create local SSH config for hosts
+  local_action: ansible.builtin.template
+  args:
+    src: ./templates/local_ssh_config.j2
+    dest: "{{ home }}/.ssh/config.d/bastions.conf"
+    mode: 0644

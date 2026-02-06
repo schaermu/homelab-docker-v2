@@ -224,3 +224,12 @@
       ansible.builtin.shell: |
         resolvectl dns {{ ansible_facts.default_ipv4.interface }} {{ hostvars[groups['dns'][0]].ansible_facts.default_ipv4.address }}
         resolvectl domain {{ ansible_facts.default_ipv4.interface }} lab.schaermu.ch
+
+- name: Creating local SSH config file
+  hosts: ssh
+  roles:
+    - local-ssh-config
+  vars:
+    host_groups:
+      - name: dns
+        hosts: "{{ groups['dns'] }}"
