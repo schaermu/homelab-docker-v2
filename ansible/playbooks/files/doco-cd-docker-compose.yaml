@@ -36,7 +36,7 @@ services:
         volume:
           nocopy: true
   app:
-    image: ghcr.io/kimdre/doco-cd:0.61.0
+    image: ghcr.io/kimdre/doco-cd:0.62.0-rc.1
     secrets:
       - dococd-secrets-client-secret
       - dococd-git-access-token
