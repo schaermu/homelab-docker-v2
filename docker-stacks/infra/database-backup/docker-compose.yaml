@@ -27,6 +27,13 @@ services:
           nocopy: true
   app:
     image: tiredofit/db-backup:latest
+    volumes:
+      - type: volume
+        source: data
+        target: /backup
+        volume:
+          subpath: db-backup-data
+          nocopy: true
     environment:
       TIMEZONE: Europe/Zurich
       DEFAULT_BACKUP_BEGIN: "0200"
@@ -37,4 +44,4 @@ services:
       DB01_NAME: pocketid
       DB01_USER: pocketid
       DB01_PASS: ${POCKETID_DB_PASSWORD}
-      DB01_FILESYSTEM_PATH: /backups/pocket-id
+      DB01_FILESYSTEM_PATH: /backup/pocket-id
