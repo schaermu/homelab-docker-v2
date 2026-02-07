@@ -36,5 +36,5 @@ services:
       DB01_HOST: pocketid-db
       DB01_NAME: pocketid
       DB01_USER: pocketid
-      DB01_PASSWORD: ${POCKETID_DB_PASSWORD}
+      DB01_PASS: ${POCKETID_DB_PASSWORD}
       DB01_FILESYSTEM_PATH: /backups/pocket-id
