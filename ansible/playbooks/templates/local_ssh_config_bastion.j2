@@ -1,0 +1,7 @@
+Match Host bastion localnetwork 192.168.1.0/24
+    HostName {{ private_ip }}
+
+Host bastion
+    HostName {{ tailscale_ip }}
+    User schaermu
+    Identityfile ~/.ssh/id_rsa

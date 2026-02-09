@@ -22,19 +22,10 @@ run = "tofu"
 [tasks.run-ansible]
 usage = '''
 arg "<playbook>" help="Name of the playbook to run (without .yaml extension)"
+arg "<tags>" help="Comma-separated list of Ansible tags to run (defaults to 'all')" default="all"
 '''
 run = '''
-ansible-playbook ansible/playbooks/${usage_playbook?}.yaml
-'''
-
-[tasks.encrypt]
-usage = '''
-arg "<file>" help="File to encrypt"
-arg "<stack>" help="Target stack"
-'''
-run = '''
-mkdir -p docker-stacks/${usage_stack?}/secrets
-sops encrypt --age age1ckwz78jqmky5675utpwezq328ksurvk7wrgkvmwcwljg5pes9fpslfdz0q secrets/${usage_file?} > docker-stacks/${usage_stack?}/secrets/${usage_file?}.enc
+ansible-playbook ansible/playbooks/${usage_playbook?}.yaml --tags "${usage_tags?}"
 '''
 
 [tasks.dococd-restart]

@@ -31,6 +31,7 @@
         state: present
         data: "{{ secrets.secrets['CLOUDFLARE_TUNNEL_TOKEN'] | b64encode }}"
         data_is_b64: true
+  tags: bootstrap
 
 - name: Create default overlay networks
   hosts: managers[0]
@@ -50,6 +51,7 @@
         - { name: cloudflare-net, ipam_subnet: 10.0.11.0/24, ipam_gateway: 10.0.11.1 }
         - { name: metric-net, ipam_subnet: 10.0.12.0/24, ipam_gateway: 10.0.12.1 }
         - { name: vlog-net, ipam_subnet: 10.0.13.0/24, ipam_gateway: 10.0.13.1 }
+  tags: bootstrap
 
 - name: Deploy initial stacks
   hosts: managers[0]
@@ -74,5 +76,4 @@
         compose:
           - /tmp/{{ item.file }}
       loop: "{{ stack_list }}"
-  tags:
-    - bootstrap
+  tags: bootstrap

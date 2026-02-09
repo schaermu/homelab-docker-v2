@@ -7,6 +7,7 @@
   vars:
     pip_install_packages:
       - name: infisicalsdk
+  tags: docker
 
 - name: Setup keepalived
   hosts: [managers]
@@ -39,6 +40,7 @@
       name: keepalived
       state: started
       enabled: true
+  tags: docker
 
 - name: Install docker
   hosts: [workers, managers]
@@ -50,6 +52,7 @@
   roles:
     - role: geerlingguy.pip
     - role: geerlingguy.docker
+  tags: docker
 
 - name: Add docker-apps user
   hosts: [workers, managers]
@@ -74,6 +77,7 @@
         name: "{{ lookup('env', 'DOCKER_USER') }}"
         groups: docker
         append: true
+  tags: docker
 
 - name: Initialize Docker Swarm
   hosts: managers[0]
@@ -88,6 +92,7 @@
     - name: Get swarm info
       community.docker.docker_swarm_info:
       register: swarm_info
+  tags: docker
 
 - name: Join remaining managers to Swarm
   hosts: managers[1:]
@@ -101,6 +106,7 @@
             "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
           ]
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Manager }}"
+  tags: docker
 
 - name: Join workers to Swarm
   hosts: workers
@@ -114,11 +120,17 @@
             "{{ hostvars[groups['managers'][0]].ansible_facts.default_ipv4.address }}",
           ]
         join_token: "{{ hostvars[groups['managers'][0]].swarm_info.swarm_facts.JoinTokens.Worker }}"
+  tags: docker
 
-- name: Label worker nodes for local storage
+- name: Label worker nodes for special capabilities
   hosts: managers[0]
   become: true
   tasks:
+    - name: Add gpu label to worker 1
+      community.docker.docker_node:
+        hostname: "{{ groups['workers'][0] }}"
+        labels:
+          gpu: "true"
     - name: Add db label to worker 2
       community.docker.docker_node:
         hostname: "{{ groups['workers'][1] }}"
@@ -129,15 +141,4 @@
         hostname: "{{ groups['workers'][2] }}"
         labels:
           ssd_storage: "true"
-
-- name: Creating local SSH config file
-  hosts: localhost
-  roles:
-    - local-ssh-config
-  vars:
-    filename: docker-swarm
-    host_groups:
-      - name: manager
-        hosts: "{{ groups['managers'] }}"
-      - name: worker
-        hosts: "{{ groups['workers'] }}"
+  tags: docker

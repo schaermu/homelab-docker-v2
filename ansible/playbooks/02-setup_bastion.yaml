@@ -7,6 +7,7 @@
   vars:
     pip_install_packages:
       - name: infisicalsdk
+  tags: bastion
 
 - name: Setup bastion user
   hosts: ssh
@@ -43,6 +44,7 @@
       with_file:
         - public_keys/schaermu@klappchuebu.pub
         - public_keys/schaermu@donnerchuebu.pub
+  tags: bastion
 
 - name: Setup and configure SSH daemon
   hosts: ssh
@@ -63,6 +65,7 @@
         name: ssh
         state: restarted
         enabled: true
+  tags: bastion
 
 - name: Setup & connect Tailscale
   hosts: ssh
@@ -76,13 +79,4 @@
     - role: artis3n.tailscale.machine
       vars:
         tailscale_authkey: "{{ secrets.secrets['TAILSCALE_AUTH_KEY'] }}"
-
-- name: Creating local SSH config file
-  hosts: localhost
-  roles:
-    - local-ssh-config
-  vars:
-    filename: bastion
-    host_groups:
-      - name: bastion
-        hosts: "{{ groups['ssh'] }}"
+  tags: bastion

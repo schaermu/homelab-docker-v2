@@ -1,0 +1,60 @@
+
+- name: Gather host facts for local SSH config
+  hosts: all
+  gather_facts: true
+  tags: local
+
+- name: Creating local SSH config file
+  hosts: ssh
+  tasks:
+    - local_action: set_fact
+      args:
+        home: "{{ lookup('env', 'HOME') }}"
+
+    - name: Ensure local SSH include directory exists
+      local_action: ansible.builtin.file
+      args:
+        path: "{{ home }}/.ssh/config.d"
+        state: directory
+        mode: 0755
+
+    - name: Ensure include directory is included in main SSH config
+      local_action: ansible.builtin.lineinfile
+      args:
+        path: "{{ home }}/.ssh/config"
+        regexp: '^Include config\.d/\*'
+        line: 'Include config.d/*'
+        insertbefore: BOF
+        state: present
+        create: true
+        mode: 0644
+
+    - name: Create local SSH config for hosts
+      local_action: ansible.builtin.template
+      args:
+        src: ./templates/local_ssh_config.j2
+        dest: "{{ home }}/.ssh/config.d/{{ item.filename }}"
+        mode: 0644
+      vars:
+        host_groups: "{{ item.host_groups }}"
+      loop:
+        - { filename: docker-swarm, host_groups: [{ name: manager, hosts: "{{ groups['managers'] }}" }, { name: worker, hosts: "{{ groups['workers'] }}" }] }
+        - { filename: dns, host_groups: [{ name: dns, hosts: "{{ groups['dns'] }}" }] }
+
+    - name: Get tailscale ip for bastion hosts
+      action: ansible.builtin.shell
+      args:
+        cmd: "tailscale ip -4"
+      register: tailscale_ip_out
+
+    - name: Configure split SSH config for bastion host
+      local_action: ansible.builtin.template
+      args:
+        src: ./templates/local_ssh_config_bastion.j2
+        dest: "{{ home }}/.ssh/config.d/bastion"
+        mode: 0644
+      vars:
+        tailscale_ip: "{{ tailscale_ip_out.stdout }}"
+        private_ip: "{{ hostvars[groups['ssh'][0]]['ansible_facts']['default_ipv4']['address'] }}"
+      when: groups['ssh'] is defined and groups['ssh'] | length > 0
+  tags: local

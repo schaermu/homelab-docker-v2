@@ -1,0 +1,14 @@
+- name: Setup dns servers
+  ansible.builtin.import_playbook: 01-setup_dns.yaml
+
+- name: Setup bastion host
+  ansible.builtin.import_playbook: 02-setup_bastion.yaml
+
+- name: Setup docker swarm cluster
+  ansible.builtin.import_playbook: 03-setup_docker_swarm.yaml
+
+- name: Setup local SSH config
+  ansible.builtin.import_playbook: 04-setup_local_ssh.yaml
+
+- name: Bootstrap homelab with initial stacks
+  ansible.builtin.import_playbook: 05-bootstrap_homelab.yaml

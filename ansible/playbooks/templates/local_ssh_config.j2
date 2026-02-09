@@ -1,11 +1,12 @@
 #jinja2:lstrip_blocks: True
-  
+
 {% for group in host_groups %}
 {% for host in group['hosts'] %}
 Host {{ group.name }}{{ "0%i"|format(loop.index) if group.hosts|length > 1 else "" }}
   User ansible
   HostName {{ hostvars[host]['ansible_facts']['default_ipv4']['address'] }}
   ServerAliveInterval 120
+  ProxyJump bastion
   
 {% endfor %}
 {% endfor %}
