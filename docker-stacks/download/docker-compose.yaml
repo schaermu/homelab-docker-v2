@@ -1,0 +1,208 @@
+volumes:
+  arr-stack-data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/arr-stack"
+  docker-data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.244,rw,vers=4.1
+      device: ":/mnt/MAIN_POOL/data/docker-volumes"
+  db-data:
+
+networks:
+  default:
+    name: download-net
+  metric-net:
+    external: true
+  db-backup-net:
+    external: true
+
+services:
+  init_volumes:
+    user: "3004:3004"
+    image: busybox
+    command: >
+      hush -c "mkdir -p /mnt/docker-volumes/{autobrr-config,qui-config,qbit-config,sabnzbd-config}"
+    deploy:
+      replicas: 1
+      mode: replicated-job
+    volumes:
+      - type: volume
+        source: docker-data
+        target: /mnt/docker-volumes
+        volume:
+          nocopy: true
+  
+  gluetun:
+    image: qmcgaw/gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: protonvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      SERVER_COUNTRIES: Switzerland
+      VPN_PORT_FORWARDING: "on"
+    deploy:
+      replicas: 1
+
+  autobrr:
+    image: ghcr.io/autobrr/autobrr:latest
+    environment:
+      AUTOBRR__DATABASE_DSN: ${AUTOBRR_DB_CONNECTION_STRING}
+      AUTOBRR__OIDC_ENABLED: "true"
+      AUTOBRR__OIDC_ISSUER: https://auth.schaermu.ch
+      AUTOBRR__OIDC_CLIENT_ID: ${AUTOBRR_OIDC_CLIENT_ID}
+      AUTOBRR__OIDC_CLIENT_SECRET: ${AUTOBRR_OIDC_CLIENT_SECRET}
+      AUTOBRR__OIDC_REDIRECT_URL: https://autobrr.lab.schaermu.ch/api/auth/oidc/callback
+      AUTOBRR__METRICS_ENABLED: "true"
+    networks:
+      default:
+      metric-net:
+        aliases:
+          - autobrr
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.autobrr.entryPoints: "websecure"
+      traefik.http.routers.autobrr.rule: "Host(`autobrr.lab.schaermu.ch`)"
+      traefik.http.services.autobrr.loadbalancer.server.port: 7475
+    volumes:
+      - type: volume
+        source: docker-data
+        target: /config
+        volume:
+          subpath: autobrr-config
+          nocopy: true
+    deploy:
+      replicas: 1
+  
+  autobrr-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: autobrr
+      POSTGRES_PASSWORD: ${AUTOBRR_DB_PASSWORD}
+      POSTGRES_DB: autobrr
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+    networks:
+      default:
+      db-backup-net:
+        aliases:
+          - autobrr-db
+    deploy:
+      placement:
+        constraints:
+          - node.labels.db==true
+      replicas: 1
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U autobrr" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  qui:
+    image: ghcr.io/autobrr/qui:v1.13.1
+    environment:
+      QUI__OIDC_ENABLED: "true"
+      QUI__OIDC_ISSUER: https://auth.schaermu.ch
+      QUI__OIDC_CLIENT_ID: ${QUI_OIDC_CLIENT_ID}
+      QUI__OIDC_CLIENT_SECRET: ${QUI_OIDC_CLIENT_SECRET}
+      QUI__OIDC_REDIRECT_URL: https://torrent.lab.schaermu.ch/api/auth/oidc/callback
+      QUI__METRICS_ENABLED: "true"
+      QUI__DATA_DIR: /data/downloads
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.qui.entryPoints: "websecure"
+      traefik.http.routers.qui.rule: "Host(`torrent.lab.schaermu.ch`)"
+      traefik.http.services.qui.loadbalancer.server.port: 7476
+    networks:
+      default:
+      metric-net:
+        aliases:
+          - qui
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - type: volume
+        source: arr-stack-data
+        target: /data/downloads
+        volume:
+          subpath: torrents
+          nocopy: true
+      - type: volume
+        source: docker-data
+        target: /config
+        volume:
+          subpath: qui-config
+          nocopy: true
+    deploy:
+      replicas: 1
+
+  qbittorrent:
+    image: ghcr.io/hotio/qbittorrent:latest
+    network_mode: service:gluetun
+    environment:
+      PUID: 3004
+      PGID: 3004
+      UMASK: 002
+      TZ: Europe/Zurich
+      WEBUI_PORT: 8080
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/localtime:/etc/localtime:ro
+      - type: volume
+        source: arr-stack-data
+        target: /data/torrents
+        volume:
+          subpath: torrents
+          nocopy: true
+      - type: volume
+        source: docker-data
+        target: /config
+        volume:
+          subpath: qbit-config
+          nocopy: true
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+    deploy:
+      replicas: 1
+
+  sabnzbd:
+    image: ghcr.io/hotio/sabnzbd:latest
+    network_mode: service:gluetun
+    environment:
+      PUID: 3004
+      PGID: 3004
+      UMASK: 002
+      TZ: Europe/Zurich
+      WEBUI_PORT: 8080
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/localtime:/etc/localtime:ro
+      - type: volume
+        source: arr-stack-data
+        target: /data/usenet
+        volume:
+          subpath: usenet
+          nocopy: true
+      - type: volume
+        source: docker-data
+        target: /config
+        volume:
+          subpath: sabnzbd-config
+          nocopy: true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.sabnzbd.entryPoints: "websecure"
+      traefik.http.routers.sabnzbd.rule: "Host(`usenet.lab.schaermu.ch`)"
+      traefik.http.services.sabnzbd.loadbalancer.server.port: 8080
+    deploy:
+      replicas: 1

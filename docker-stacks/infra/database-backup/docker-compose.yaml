@@ -45,3 +45,9 @@ services:
       DB01_USER: pocketid
       DB01_PASS: ${POCKETID_DB_PASSWORD}
       DB01_FILESYSTEM_PATH: /backup/pocket-id
+      DB02_TYPE: pgsql
+      DB02_HOST: autobrr-db
+      DB02_NAME: autobrr
+      DB02_USER: autobrr
+      DB02_PASS: ${AUTOBRR_DB_PASSWORD}
+      DB02_FILESYSTEM_PATH: /backup/autobrr
