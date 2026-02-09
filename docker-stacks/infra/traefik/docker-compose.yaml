@@ -22,7 +22,7 @@ services:
     user: "3004:3004"
     image: busybox
     command: >
-      sh -c "mkdir -p /mnt/docker-volumes/traefik-data"
+      hush -c "mkdir -p /mnt/docker-volumes/traefik-data"
     deploy:
       replicas: 1
       mode: replicated-job
@@ -69,6 +69,7 @@ services:
           - node.role==manager
       labels:
         traefik.enable: "true"
+        traefik.http.routers.dashboard.middlewares: "default-security-headers,gzip,oidc-auth"
         traefik.http.routers.dashboard.entryPoints: "websecure"
         traefik.http.routers.dashboard.service: "api@internal"
         traefik.http.routers.dashboard.rule: "Host(`traefik.lab.schaermu.ch`)"

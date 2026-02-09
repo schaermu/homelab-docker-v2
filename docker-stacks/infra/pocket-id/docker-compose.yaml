@@ -18,7 +18,7 @@ services:
     user: "3004:3004"
     image: busybox
     command: >
-      sh -c "mkdir -p /mnt/docker-volumes/pocketid-data"
+      hush -c "mkdir -p /mnt/docker-volumes/pocketid-data"
     deploy:
       replicas: 1
       mode: replicated-job
